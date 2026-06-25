@@ -14,7 +14,6 @@ data/processed/
 *.csv
 
 # Models (too large for GitHub)
-models/*.json
 models/*.pkl
 
 # AWS credentials (never push these)
