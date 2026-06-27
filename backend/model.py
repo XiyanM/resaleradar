@@ -51,7 +51,9 @@ def predict(features: dict) -> dict:
     q50_pred = float(model_q50.predict(dmatrix)[0])
     q90_pred = float(model_q90.predict(dmatrix)[0])
 
+    crossing = not (q10_pred <= q50_pred <= q90_pred)
     lower_bound, predicted_price, upper_bound = sorted([q10_pred, q50_pred, q90_pred])
+
     shap_vals = explainer.shap_values(values)[0]
     shap_dict = {name: round(float(val), 2) for name, val in zip(FEATURE_NAMES, shap_vals)}
 
@@ -60,4 +62,5 @@ def predict(features: dict) -> dict:
         "lower_bound": round(lower_bound, 2),
         "upper_bound": round(upper_bound, 2),
         "shap_values": shap_dict,
+        "quantile_crossing": crossing,
     }

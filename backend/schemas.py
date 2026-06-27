@@ -52,3 +52,4 @@ class PredictResponse(BaseModel):
     lower_bound: float
     upper_bound: float
     shap_values: dict[str, float]
+    quantile_crossing: bool 
