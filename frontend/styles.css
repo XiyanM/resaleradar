@@ -11,23 +11,25 @@
      Inter    — everything else
    ========================================================= */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 :root {
-  --teal: #00A896;
-  --teal-light: #E0F5F3;
-  --text-primary: #0F1923;
-  --text-secondary: #6B7A8D;
-  --surface: #F7F9FB;
-  --border: #E2E8EF;
-  --border-strong: #CBD5DF;
-  --white: #FFFFFF;
-  --red: #C0392B;
-  --red-light: #FDF0EE;
+  --teal: #00a896;
+  --teal-light: #e0f5f3;
+  --text-primary: #0f1923;
+  --text-secondary: #6b7a8d;
+  --surface: #f7f9fb;
+  --border: #e2e8ef;
+  --border-strong: #cbd5df;
+  --white: #ffffff;
+  --red: #c0392b;
+  --red-light: #fdf0ee;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -39,7 +41,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   color: var(--text-primary);
   background: var(--white);
   line-height: 1.65;
@@ -79,9 +81,15 @@ body {
 }
 
 /* Stagger children of a fade-up container */
-.fade-up:nth-child(2) { transition-delay: 0.08s; }
-.fade-up:nth-child(3) { transition-delay: 0.16s; }
-.fade-up:nth-child(4) { transition-delay: 0.24s; }
+.fade-up:nth-child(2) {
+  transition-delay: 0.08s;
+}
+.fade-up:nth-child(3) {
+  transition-delay: 0.16s;
+}
+.fade-up:nth-child(4) {
+  transition-delay: 0.24s;
+}
 
 /* =========================================================
    NAV
@@ -171,7 +179,7 @@ body {
   display: inline-block;
   background: var(--teal);
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 15px;
   font-weight: 500;
   padding: 0.75rem 1.75rem;
@@ -269,7 +277,7 @@ input[type="text"],
 input[type="number"],
 input[type="month"],
 select {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 15px;
   color: var(--text-primary);
   background: var(--surface);
@@ -303,7 +311,7 @@ select:focus {
   gap: 0.5rem;
   background: var(--text-primary);
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-size: 15px;
   font-weight: 500;
   padding: 0.8rem 1.75rem;
@@ -331,14 +339,16 @@ select:focus {
 .spinner {
   width: 15px;
   height: 15px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-msg {
@@ -396,7 +406,7 @@ select:focus {
 }
 
 .result-price {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: clamp(2.1rem, 5vw, 3.5rem);
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -418,9 +428,9 @@ select:focus {
 .crossing-warning {
   margin-top: 0.85rem;
   font-size: 13px;
-  background: #FFF8E6;
-  border: 1px solid #F0D88A;
-  color: #7A5C00;
+  background: #fff8e6;
+  border: 1px solid #f0d88a;
+  color: #7a5c00;
   border-radius: var(--radius-sm);
   padding: 0.55rem 0.85rem;
 }
@@ -523,6 +533,19 @@ input[type="range"]::-moz-range-thumb {
   margin-top: 0.85rem;
 }
 
+#map .leaflet-pane {
+  z-index: 1;
+}
+
+#map .leaflet-control-container {
+  z-index: 2;
+}
+
+#map .leaflet-top,
+#map .leaflet-bottom {
+  z-index: 2;
+}
+
 /* =========================================================
    EXPLORER
    ========================================================= */
@@ -605,7 +628,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .metric-val {
-  font-family: 'DM Mono', monospace;
+  font-family: "DM Mono", monospace;
   font-size: 1.2rem;
   font-weight: 500;
   color: var(--text-primary);

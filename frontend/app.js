@@ -5,7 +5,7 @@
 "use strict";
 
 const API_BASE = "http://127.0.0.1:8000";
-const CURRENT_CPI = 102.052;
+const CURRENT_CPI = 102.814; //May 2026 data
 const BASE_CPI = 102.052;
 
 const TOWNS = [
