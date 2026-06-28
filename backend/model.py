@@ -96,7 +96,7 @@ def _haversine(lat1: float, lon1: float, lats: np.ndarray, lons: np.ndarray) -> 
 
 # ── Geo feature computation ───────────────────────────────────────────────────
 
-def _compute_geo_features(lat: float, lon: float, transaction_year: int, transaction_month: int) -> dict:
+def _compute_geo_features(lat: float, lon: float, transaction_year: int, transaction_month: int) -> tuple[dict, dict]:
     tx_date = date(transaction_year, transaction_month, 1)
 
     # MRT -- filter to stations open at time of transaction
@@ -105,17 +105,22 @@ def _compute_geo_features(lat: float, lon: float, transaction_year: int, transac
     dist_nearest_mrt    = float(mrt_dist.min()) if len(mrt_dist) else 99.0
     num_mrt_within_1km  = int((mrt_dist <= 1.0).sum())
     num_mrt_within_2km  = int((mrt_dist <= 2.0).sum())
+    nearest_mrt_idx     = int(mrt_dist.argmin()) if len(mrt_dist) else None
+    nearest_mrt_row     = mrt_open.iloc[nearest_mrt_idx] if nearest_mrt_idx is not None else None
 
     # Schools (all schools, no temporal filter)
     school_dist = _haversine(lat, lon, _schools["latitude"].values, _schools["longitude"].values)
-    dist_nearest_school         = float(school_dist.min())
-    num_schools_within_1km      = int((school_dist <= 1.0).sum())
+    dist_nearest_school      = float(school_dist.min())
+    num_schools_within_1km   = int((school_dist <= 1.0).sum())
+    nearest_school_idx = int(school_dist.argmin())
+    nearest_school_row = _schools.iloc[nearest_school_idx]
 
-    # Primary schools only (mainlevel_code == "PRIMARY")
-    primary = _schools[_schools["mainlevel_code"] == "PRIMARY"]
+    # Primary schools only
+    primary  = _schools[_schools["mainlevel_code"] == "PRIMARY"]
     pri_dist = _haversine(lat, lon, primary["latitude"].values, primary["longitude"].values)
     dist_nearest_primary_school    = float(pri_dist.min()) if len(pri_dist) else 99.0
     num_primary_schools_within_1km = int((pri_dist <= 1.0).sum())
+
 
     # Hawker centres -- filter to centres open at time of transaction
     hawker_open = _hawkers[
@@ -123,17 +128,21 @@ def _compute_geo_features(lat: float, lon: float, transaction_year: int, transac
         (_hawkers["completion_year"] <= transaction_year)
     ]
     hawker_dist = _haversine(lat, lon, hawker_open["latitude"].values, hawker_open["longitude"].values)
-    dist_nearest_hawker    = float(hawker_dist.min()) if len(hawker_dist) else 99.0
+    dist_nearest_hawker     = float(hawker_dist.min()) if len(hawker_dist) else 99.0
     num_hawkers_within_500m = int((hawker_dist <= 0.5).sum())
+    nearest_hawker_idx  = int(hawker_dist.argmin()) if len(hawker_dist) else None
+    nearest_hawker_row  = hawker_open.iloc[nearest_hawker_idx] if nearest_hawker_idx is not None else None
 
     # Malls
     mall_dist = _haversine(lat, lon, _malls["latitude"].values, _malls["longitude"].values)
-    dist_nearest_mall   = float(mall_dist.min())
+    dist_nearest_mall    = float(mall_dist.min())
     num_malls_within_2km = int((mall_dist <= 2.0).sum())
+    nearest_mall_idx    = int(mall_dist.argmin())
+    nearest_mall_row    = _malls.iloc[nearest_mall_idx]
 
     # Bus stops
     bus_dist = _haversine(lat, lon, _buses["latitude"].values, _buses["longitude"].values)
-    dist_nearest_bus_stop    = float(bus_dist.min())
+    dist_nearest_bus_stop     = float(bus_dist.min())
     num_bus_stops_within_300m = int((bus_dist <= 0.3).sum())
 
     # Expressways
@@ -143,23 +152,48 @@ def _compute_geo_features(lat: float, lon: float, transaction_year: int, transac
     # CBD
     dist_to_cbd = float(_haversine(lat, lon, np.array([CBD_LAT]), np.array([CBD_LON]))[0])
 
-    return {
-        "dist_nearest_mrt":             dist_nearest_mrt,
-        "num_mrt_within_1km":           num_mrt_within_1km,
-        "num_mrt_within_2km":           num_mrt_within_2km,
-        "dist_nearest_school":          dist_nearest_school,
-        "num_schools_within_1km":       num_schools_within_1km,
-        "dist_nearest_primary_school":  dist_nearest_primary_school,
+    geo_features = {
+        "dist_nearest_mrt":               dist_nearest_mrt,
+        "num_mrt_within_1km":             num_mrt_within_1km,
+        "num_mrt_within_2km":             num_mrt_within_2km,
+        "dist_nearest_school":            dist_nearest_school,
+        "num_schools_within_1km":         num_schools_within_1km,
+        "dist_nearest_primary_school":    dist_nearest_primary_school,
         "num_primary_schools_within_1km": num_primary_schools_within_1km,
-        "dist_nearest_mall":            dist_nearest_mall,
-        "num_malls_within_2km":         num_malls_within_2km,
-        "dist_nearest_hawker":          dist_nearest_hawker,
-        "num_hawkers_within_500m":      num_hawkers_within_500m,
-        "dist_nearest_bus_stop":        dist_nearest_bus_stop,
-        "num_bus_stops_within_300m":    num_bus_stops_within_300m,
-        "dist_nearest_expressway":      dist_nearest_expressway,
-        "dist_to_cbd":                  dist_to_cbd,
+        "dist_nearest_mall":              dist_nearest_mall,
+        "num_malls_within_2km":           num_malls_within_2km,
+        "dist_nearest_hawker":            dist_nearest_hawker,
+        "num_hawkers_within_500m":        num_hawkers_within_500m,
+        "dist_nearest_bus_stop":          dist_nearest_bus_stop,
+        "num_bus_stops_within_300m":      num_bus_stops_within_300m,
+        "dist_nearest_expressway":        dist_nearest_expressway,
+        "dist_to_cbd":                    dist_to_cbd,
     }
+
+    nearest_amenities = {
+        "mrt": {
+            "name": str(nearest_mrt_row["station_name"]) if nearest_mrt_row is not None else None,
+            "lat":  float(nearest_mrt_row["latitude"])   if nearest_mrt_row is not None else None,
+            "lon":  float(nearest_mrt_row["longitude"])  if nearest_mrt_row is not None else None,
+        },
+        "school": {
+            "name": str(nearest_school_row["school_name"]) if nearest_school_row is not None else None,
+            "lat":  float(nearest_school_row["latitude"])  if nearest_school_row is not None else None,
+            "lon":  float(nearest_school_row["longitude"]) if nearest_school_row is not None else None,
+        },
+        "hawker": {
+            "name": str(nearest_hawker_row["name"]) if nearest_hawker_row is not None else None,
+            "lat":  float(nearest_hawker_row["latitude"]) if nearest_hawker_row is not None else None,
+            "lon":  float(nearest_hawker_row["longitude"]) if nearest_hawker_row is not None else None,
+        },
+        "mall": {
+            "name": str(nearest_mall_row["mall_name"]),
+            "lat":  float(nearest_mall_row["latitude"]),
+            "lon":  float(nearest_mall_row["longitude"]),
+        },
+    }
+
+    return geo_features, nearest_amenities
 
 # ── Categorical expansion ─────────────────────────────────────────────────────
 
@@ -175,8 +209,10 @@ def _expand_categoricals(features: dict) -> dict:
 # ── Main predict function ─────────────────────────────────────────────────────
 
 def predict(req: dict) -> dict:
-    # Geo features
-    geo = _compute_geo_features(req["lat"], req["lon"], req["transaction_year"], req["transaction_month"])
+    # Geo features + nearest amenity coordinates
+    geo, nearest_amenities = _compute_geo_features(
+        req["lat"], req["lon"], req["transaction_year"], req["transaction_month"]
+    )
 
     # Apply what-if overrides if present
     overrides = req.get("feature_overrides") or {}
@@ -233,4 +269,5 @@ def predict(req: dict) -> dict:
         "shap_values":       shap_dict,
         "quantile_crossing": crossing,
         "feature_values":    feature_values,
+        "nearest_amenities":  nearest_amenities,
     }

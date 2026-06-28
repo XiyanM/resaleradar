@@ -41,3 +41,4 @@ class PredictResponse(BaseModel):
     shap_values: dict[str, float]
     quantile_crossing: bool
     feature_values: dict[str, float]
+    nearest_amenities: dict
