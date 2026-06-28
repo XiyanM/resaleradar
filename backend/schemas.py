@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 TOWNS = [
@@ -20,36 +21,23 @@ FLAT_MODELS = [
 
 
 class PredictRequest(BaseModel):
-    floor_area_sqm: float
-    lease_commence_date: int
-    year: int
-    transaction_month: int
-    storey_midpoint: float
-    remaining_lease_years: float
-    flat_type_encoded: int
-    dist_nearest_mrt: float
-    num_mrt_within_1km: int
-    num_mrt_within_2km: int
-    dist_nearest_school: float
-    num_schools_within_1km: int
-    dist_nearest_primary_school: float
-    num_primary_schools_within_1km: int
-    dist_nearest_mall: float
-    num_malls_within_2km: int
-    dist_nearest_hawker: float
-    num_hawkers_within_500m: int
-    dist_to_cbd: float
-    dist_nearest_expressway: float
-    dist_nearest_bus_stop: float
-    num_bus_stops_within_300m: int
-    is_mature_estate: int
+    lat: float
+    lon: float
     town: str
+    flat_type: str
     flat_model: str
-
+    floor_area_sqm: float
+    storey_midpoint: float
+    lease_commence_date: int
+    transaction_year: int
+    transaction_month: int
+    remaining_lease_years: Optional[float] = None
+    feature_overrides: Optional[dict[str, float]] = None
 
 class PredictResponse(BaseModel):
     predicted_price: float
     lower_bound: float
     upper_bound: float
     shap_values: dict[str, float]
-    quantile_crossing: bool 
+    quantile_crossing: bool
+    feature_values: dict[str, float]
