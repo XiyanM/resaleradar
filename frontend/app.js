@@ -5,8 +5,6 @@
 "use strict";
 
 const API_BASE = "http://127.0.0.1:8000";
-const CURRENT_CPI = 102.814; //May 2026 data
-const BASE_CPI = 102.052;
 
 const TOWNS = [
   "ANG MO KIO",
@@ -65,6 +63,29 @@ let lastPrediction = null;
 let lastPayload = null;
 let leafletMap = null;
 let flatMarker = null;
+let currentCPI = 102.052; // fallback until /market-data loads
+let baseCPI = 100.662; // fallback until /market-data loads
+
+async function fetchMarketData() {
+  try {
+    const res = await fetch(`${API_BASE}/market-data`);
+    if (!res.ok) throw new Error("Failed to fetch market data");
+    const data = await res.json();
+    currentCPI = data.current_cpi;
+    baseCPI = data.base_cpi;
+    renderExplorerCharts(
+      data.town_medians,
+      data.trend_labels,
+      data.trend_values
+    );
+  } catch (err) {
+    console.warn(
+      "Market data fetch failed, using fallback values:",
+      err.message
+    );
+    renderExplorerCharts(null, null, null);
+  }
+}
 
 function initScrollAnimations() {
   const observer = new IntersectionObserver(
@@ -421,7 +442,7 @@ async function runPrediction(overridePayload = null) {
 }
 
 function displayResults(data, lat, lon, payload) {
-  const factor = CURRENT_CPI / BASE_CPI;
+  const factor = currentCPI / baseCPI;
   const price = Math.round(data.predicted_price * factor);
   const lower = Math.round(data.lower_bound * factor);
   const upper = Math.round(data.upper_bound * factor);
@@ -497,64 +518,6 @@ function onSliderChange() {
   }, 400);
 }
 
-const TOWN_MEDIANS = {
-  Queenstown: 785000,
-  "Bukit Merah": 745000,
-  Bishan: 720000,
-  "Toa Payoh": 700000,
-  "Marine Parade": 698000,
-  "Central Area": 690000,
-  "Kallang/Whampoa": 680000,
-  Clementi: 658000,
-  "Bukit Timah": 640000,
-  Serangoon: 610000,
-  "Ang Mo Kio": 598000,
-  Geylang: 580000,
-  Tampines: 568000,
-  Bedok: 558000,
-  Hougang: 548000,
-  "Pasir Ris": 540000,
-  "Jurong East": 532000,
-  Punggol: 525000,
-  Sengkang: 518000,
-  "Bukit Panjang": 515000,
-  Yishun: 505000,
-  "Bukit Batok": 495000,
-  Woodlands: 480000,
-  "Choa Chu Kang": 475000,
-  "Jurong West": 468000,
-  Sembawang: 455000,
-};
-
-const TREND_DATA = {
-  labels: [
-    "2017-01",
-    "2017-07",
-    "2018-01",
-    "2018-07",
-    "2019-01",
-    "2019-07",
-    "2020-01",
-    "2020-07",
-    "2021-01",
-    "2021-07",
-    "2022-01",
-    "2022-07",
-    "2023-01",
-    "2023-07",
-    "2024-01",
-    "2024-07",
-    "2025-01",
-    "2025-07",
-    "2026-01",
-  ],
-  values: [
-    420000, 418000, 415000, 412000, 418000, 422000, 428000, 435000, 460000,
-    510000, 565000, 610000, 645000, 660000, 665000, 668000, 672000, 678000,
-    685000,
-  ],
-};
-
 const HOVER_LABEL = {
   bgcolor: "#0F1923",
   bordercolor: "#0F1923",
@@ -562,11 +525,13 @@ const HOVER_LABEL = {
   align: "left",
 };
 
-function renderExplorerCharts() {
-  const towns = Object.keys(TOWN_MEDIANS).sort(
-    (a, b) => TOWN_MEDIANS[b] - TOWN_MEDIANS[a]
+function renderExplorerCharts(townMedians, trendLabels, trendValues) {
+  if (!townMedians || !trendLabels || !trendValues) return;
+
+  const towns = Object.keys(townMedians).sort(
+    (a, b) => townMedians[b] - townMedians[a]
   );
-  const prices = towns.map((t) => TOWN_MEDIANS[t]);
+  const prices = towns.map((t) => townMedians[t]);
   const maxPrice = Math.max(...prices);
 
   Plotly.newPlot(
@@ -616,8 +581,8 @@ function renderExplorerCharts() {
       {
         type: "scatter",
         mode: "lines",
-        x: TREND_DATA.labels,
-        y: TREND_DATA.values,
+        x: trendLabels,
+        y: trendValues,
         line: { color: "#00A896", width: 2.5 },
         hovertemplate: "<b>%{x}</b><br>SGD %{y:,.0f}<extra></extra>",
         hoverlabel: HOVER_LABEL,
@@ -650,7 +615,7 @@ function renderExplorerCharts() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initDropdowns();
-  renderExplorerCharts();
+  fetchMarketData();
   initScrollAnimations();
 
   const now = new Date();
