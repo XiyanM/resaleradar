@@ -546,6 +546,32 @@ input[type="range"]::-moz-range-thumb {
   z-index: 2;
 }
 
+.map-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.map-block {
+  padding-bottom: 0.5rem;
+}
+
 /* =========================================================
    EXPLORER
    ========================================================= */

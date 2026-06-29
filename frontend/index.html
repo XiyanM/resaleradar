@@ -1,278 +1,470 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ResaleRadar — HDB Resale Price Predictor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-
-  <!-- NAV -->
-  <nav class="nav">
-    <span class="nav-logo">ResaleRadar</span>
-    <div class="nav-links">
-      <a href="#predictor">Predictor</a>
-      <a href="#explorer">Explorer</a>
-      <a href="#about">About</a>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-inner">
-      <p class="hero-eyebrow">HDB Resale Price Intelligence</p>
-      <h1 class="hero-heading">Know what a flat is<br>actually worth.</h1>
-      <p class="hero-sub">XGBoost model trained on 233,055 transactions with geospatial enrichment, CPI adjustment, and 80% confidence intervals. 3.56% MAPE on held-out test data.</p>
-      <a href="#predictor" class="btn-primary" onclick="event.preventDefault(); document.getElementById('predictor').scrollIntoView({ behavior: 'smooth' });">Get a prediction</a>
-    </div>
-  </section>
-
-  <!-- PREDICTOR -->
-  <section class="section" id="predictor">
-    <div class="container">
-      <div class="section-header fade-up">
-        <h2>Price predictor</h2>
-        <p class="section-sub">Enter the flat details below. Geocoding and feature computation happen in your browser.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResaleRadar — HDB Resale Price Predictor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav class="nav">
+      <span class="nav-logo">ResaleRadar</span>
+      <div class="nav-links">
+        <a href="#predictor">Predictor</a>
+        <a href="#explorer">Explorer</a>
+        <a href="#about">About</a>
       </div>
+    </nav>
 
-      <div class="predictor-layout">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <p class="hero-eyebrow">HDB Resale Price Intelligence</p>
+        <h1 class="hero-heading">Know what a flat is<br />actually worth.</h1>
+        <p class="hero-sub">
+          XGBoost model trained on 233,055 transactions with geospatial
+          enrichment, CPI adjustment, and 80% confidence intervals. 3.56% MAPE
+          on held-out test data.
+        </p>
+        <a
+          href="#predictor"
+          class="btn-primary"
+          onclick="event.preventDefault(); document.getElementById('predictor').scrollIntoView({ behavior: 'smooth' });"
+          >Get a prediction</a
+        >
+      </div>
+    </section>
 
-        <!-- FORM -->
-        <div class="form-panel">
-          <div class="form-group">
-            <label for="address">Block and street address</label>
-            <input type="text" id="address" placeholder="e.g. 123 Ang Mo Kio Ave 3" autocomplete="off" />
-            <span class="field-hint">HDB block address only — no unit number needed</span>
-          </div>
+    <!-- PREDICTOR -->
+    <section class="section" id="predictor">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>Price predictor</h2>
+          <p class="section-sub">
+            Enter the flat details below. Geocoding and feature computation
+            happen in your browser.
+          </p>
+        </div>
 
-          <div class="form-row">
+        <div class="predictor-layout">
+          <!-- FORM -->
+          <div class="form-panel">
             <div class="form-group">
-              <label for="town">Town</label>
-              <select id="town">
-                <option value="">Select town</option>
+              <label for="address">Block and street address</label>
+              <input
+                type="text"
+                id="address"
+                placeholder="e.g. 123 Ang Mo Kio Ave 3"
+                autocomplete="off"
+              />
+              <span class="field-hint"
+                >HDB block address only — no unit number needed</span
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="town">Town</label>
+                <select id="town">
+                  <option value="">Select town</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="flat_type">Flat type</label>
+                <select id="flat_type">
+                  <option value="">Select type</option>
+                  <option value="1 ROOM">1 Room</option>
+                  <option value="2 ROOM">2 Room</option>
+                  <option value="3 ROOM">3 Room</option>
+                  <option value="4 ROOM">4 Room</option>
+                  <option value="5 ROOM">5 Room</option>
+                  <option value="EXECUTIVE">Executive</option>
+                  <option value="MULTI-GENERATION">Multi-generation</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="flat_model">Flat model</label>
+              <select id="flat_model">
+                <option value="">Select model</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="flat_type">Flat type</label>
-              <select id="flat_type">
-                <option value="">Select type</option>
-                <option value="1 ROOM">1 Room</option>
-                <option value="2 ROOM">2 Room</option>
-                <option value="3 ROOM">3 Room</option>
-                <option value="4 ROOM">4 Room</option>
-                <option value="5 ROOM">5 Room</option>
-                <option value="EXECUTIVE">Executive</option>
-                <option value="MULTI-GENERATION">Multi-generation</option>
-              </select>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="floor_area">Floor area (sqm)</label>
+                <input
+                  type="number"
+                  id="floor_area"
+                  placeholder="e.g. 90"
+                  min="30"
+                  max="300"
+                />
+              </div>
+              <div class="form-group">
+                <label for="storey">Storey range</label>
+                <select id="storey">
+                  <option value="">Select storey</option>
+                  <option value="01 TO 03">01 to 03</option>
+                  <option value="04 TO 06">04 to 06</option>
+                  <option value="07 TO 09">07 to 09</option>
+                  <option value="10 TO 12">10 to 12</option>
+                  <option value="13 TO 15">13 to 15</option>
+                  <option value="16 TO 18">16 to 18</option>
+                  <option value="19 TO 21">19 to 21</option>
+                  <option value="22 TO 24">22 to 24</option>
+                  <option value="25 TO 27">25 to 27</option>
+                  <option value="28 TO 30">28 to 30</option>
+                  <option value="31 TO 33">31 to 33</option>
+                  <option value="34 TO 36">34 to 36</option>
+                  <option value="37 TO 39">37 to 39</option>
+                  <option value="40 TO 42">40 to 42</option>
+                  <option value="43 TO 45">43 to 45</option>
+                  <option value="46 TO 48">46 to 48</option>
+                  <option value="49 TO 51">49 to 51</option>
+                </select>
+              </div>
             </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="lease_start">Lease commencement year</label>
+                <input
+                  type="number"
+                  id="lease_start"
+                  placeholder="e.g. 1998"
+                  min="1960"
+                  max="2026"
+                />
+              </div>
+              <div class="form-group">
+                <label for="transaction_month">Transaction month</label>
+                <input type="month" id="transaction_month" />
+              </div>
+            </div>
+
+            <button
+              class="btn-predict"
+              id="predict-btn"
+              onclick="runPrediction()"
+            >
+              <span id="predict-btn-text">Predict price</span>
+              <span id="predict-spinner" class="spinner hidden"></span>
+            </button>
+
+            <div id="error-msg" class="error-msg hidden"></div>
           </div>
 
-          <div class="form-group">
-            <label for="flat_model">Flat model</label>
-            <select id="flat_model">
-              <option value="">Select model</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="floor_area">Floor area (sqm)</label>
-              <input type="number" id="floor_area" placeholder="e.g. 90" min="30" max="300" />
+          <!-- OUTPUT PANEL -->
+          <div class="output-panel" id="output-panel">
+            <!-- EMPTY STATE -->
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 40 40"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    x="6"
+                    y="8"
+                    width="28"
+                    height="26"
+                    rx="2"
+                    stroke="#00A896"
+                    stroke-width="1.5"
+                  />
+                  <path
+                    d="M13 20h14M13 25h8"
+                    stroke="#00A896"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M13 15h6"
+                    stroke="#00A896"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <p>
+                Fill in the flat details and click
+                <strong>Predict price</strong> to see a valuation.
+              </p>
             </div>
-            <div class="form-group">
-              <label for="storey">Storey range</label>
-              <select id="storey">
-                <option value="">Select storey</option>
-                <option value="01 TO 03">01 to 03</option>
-                <option value="04 TO 06">04 to 06</option>
-                <option value="07 TO 09">07 to 09</option>
-                <option value="10 TO 12">10 to 12</option>
-                <option value="13 TO 15">13 to 15</option>
-                <option value="16 TO 18">16 to 18</option>
-                <option value="19 TO 21">19 to 21</option>
-                <option value="22 TO 24">22 to 24</option>
-                <option value="25 TO 27">25 to 27</option>
-                <option value="28 TO 30">28 to 30</option>
-                <option value="31 TO 33">31 to 33</option>
-                <option value="34 TO 36">34 to 36</option>
-                <option value="37 TO 39">37 to 39</option>
-                <option value="40 TO 42">40 to 42</option>
-                <option value="43 TO 45">43 to 45</option>
-                <option value="46 TO 48">46 to 48</option>
-                <option value="49 TO 51">49 to 51</option>
-              </select>
-            </div>
-          </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="lease_start">Lease commencement year</label>
-              <input type="number" id="lease_start" placeholder="e.g. 1998" min="1960" max="2026" />
-            </div>
-            <div class="form-group">
-              <label for="transaction_month">Transaction month</label>
-              <input type="month" id="transaction_month" />
-            </div>
-          </div>
+            <!-- RESULTS (hidden until prediction) -->
+            <div id="results" class="hidden">
+              <div class="result-price-block">
+                <span class="result-label">Estimated price (2024 SGD)</span>
+                <div class="result-price" id="result-price">—</div>
+                <div class="result-interval" id="result-interval"></div>
+                <div id="crossing-warning" class="crossing-warning hidden">
+                  Low confidence — this flat type is underrepresented in
+                  training data.
+                </div>
+              </div>
 
-          <button class="btn-predict" id="predict-btn" onclick="runPrediction()">
-            <span id="predict-btn-text">Predict price</span>
-            <span id="predict-spinner" class="spinner hidden"></span>
-          </button>
+              <div class="result-divider"></div>
 
-          <div id="error-msg" class="error-msg hidden"></div>
-        </div>
+              <!-- WHAT-IF SLIDERS -->
+              <div class="whatif-block">
+                <h3>What-if analysis</h3>
+                <p class="section-sub">
+                  Adjust a feature to see how the price changes.
+                </p>
 
-        <!-- OUTPUT PANEL -->
-        <div class="output-panel" id="output-panel">
+                <div class="slider-row">
+                  <label
+                    >Floor area
+                    <span class="slider-val" id="val-floor-area"></span>
+                    sqm</label
+                  >
+                  <input
+                    type="range"
+                    id="slider-floor-area"
+                    min="30"
+                    max="200"
+                    step="1"
+                    oninput="onSliderChange()"
+                  />
+                </div>
+                <div class="slider-row">
+                  <label
+                    >Storey <span class="slider-val" id="val-storey"></span
+                  ></label>
+                  <input
+                    type="range"
+                    id="slider-storey"
+                    min="2"
+                    max="50"
+                    step="1"
+                    oninput="onSliderChange()"
+                  />
+                </div>
+                <div class="slider-row">
+                  <label
+                    >Remaining lease
+                    <span class="slider-val" id="val-lease"></span> yrs</label
+                  >
+                  <input
+                    type="range"
+                    id="slider-lease"
+                    min="40"
+                    max="99"
+                    step="1"
+                    oninput="onSliderChange()"
+                  />
+                </div>
+                <div class="slider-row">
+                  <label
+                    >Dist. to nearest MRT
+                    <span class="slider-val" id="val-mrt"></span> km</label
+                  >
+                  <input
+                    type="range"
+                    id="slider-mrt"
+                    min="0.05"
+                    max="3"
+                    step="0.05"
+                    oninput="onSliderChange()"
+                  />
+                </div>
+                <div class="slider-row">
+                  <label
+                    >Dist. to CBD
+                    <span class="slider-val" id="val-cbd"></span> km</label
+                  >
+                  <input
+                    type="range"
+                    id="slider-cbd"
+                    min="1"
+                    max="30"
+                    step="0.5"
+                    oninput="onSliderChange()"
+                  />
+                </div>
+              </div>
 
-          <!-- EMPTY STATE -->
-          <div class="empty-state" id="empty-state">
-            <div class="empty-icon">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="6" y="8" width="28" height="26" rx="2" stroke="#00A896" stroke-width="1.5"/>
-                <path d="M13 20h14M13 25h8" stroke="#00A896" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M13 15h6" stroke="#00A896" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <p>Fill in the flat details and click <strong>Predict price</strong> to see a valuation.</p>
-          </div>
+              <div class="result-divider"></div>
 
-          <!-- RESULTS (hidden until prediction) -->
-          <div id="results" class="hidden">
+              <!-- SHAP -->
+              <div class="shap-block">
+                <h3>What drove this prediction</h3>
+                <p class="section-sub">
+                  SHAP values — contribution of each feature relative to the
+                  model baseline.
+                </p>
+                <div id="shap-chart"></div>
+              </div>
 
-            <div class="result-price-block">
-              <span class="result-label">Estimated price (2024 SGD)</span>
-              <div class="result-price" id="result-price">—</div>
-              <div class="result-interval" id="result-interval"></div>
-              <div id="crossing-warning" class="crossing-warning hidden">
-                Low confidence — this flat type is underrepresented in training data.
+              <div class="result-divider"></div>
+
+              <!-- MAP -->
+              <div class="map-block">
+                <h3>Location</h3>
+                <div id="map"></div>
+                <div class="map-legend">
+                  <span class="legend-item"
+                    ><span class="legend-dot" style="background: #00a896"></span
+                    >Flat</span
+                  >
+                  <span class="legend-item"
+                    ><span class="legend-dot" style="background: #e74c3c"></span
+                    >MRT</span
+                  >
+                  <span class="legend-item"
+                    ><span class="legend-dot" style="background: #f39c12"></span
+                    >Hawker</span
+                  >
+                  <span class="legend-item"
+                    ><span class="legend-dot" style="background: #3498db"></span
+                    >School</span
+                  >
+                  <span class="legend-item"
+                    ><span class="legend-dot" style="background: #9b59b6"></span
+                    >Mall</span
+                  >
+                </div>
               </div>
             </div>
-
-            <div class="result-divider"></div>
-
-            <!-- WHAT-IF SLIDERS -->
-            <div class="whatif-block">
-              <h3>What-if analysis</h3>
-              <p class="section-sub">Adjust a feature to see how the price changes.</p>
-
-              <div class="slider-row">
-                <label>Floor area <span class="slider-val" id="val-floor-area"></span> sqm</label>
-                <input type="range" id="slider-floor-area" min="30" max="200" step="1" oninput="onSliderChange()" />
-              </div>
-              <div class="slider-row">
-                <label>Storey <span class="slider-val" id="val-storey"></span></label>
-                <input type="range" id="slider-storey" min="2" max="50" step="1" oninput="onSliderChange()" />
-              </div>
-              <div class="slider-row">
-                <label>Remaining lease <span class="slider-val" id="val-lease"></span> yrs</label>
-                <input type="range" id="slider-lease" min="40" max="99" step="1" oninput="onSliderChange()" />
-              </div>
-              <div class="slider-row">
-                <label>Dist. to nearest MRT <span class="slider-val" id="val-mrt"></span> km</label>
-                <input type="range" id="slider-mrt" min="0.05" max="3" step="0.05" oninput="onSliderChange()" />
-              </div>
-              <div class="slider-row">
-                <label>Dist. to CBD <span class="slider-val" id="val-cbd"></span> km</label>
-                <input type="range" id="slider-cbd" min="1" max="30" step="0.5" oninput="onSliderChange()" />
-              </div>
-            </div>
-
-            <div class="result-divider"></div>
-
-            <!-- SHAP -->
-            <div class="shap-block">
-              <h3>What drove this prediction</h3>
-              <p class="section-sub">SHAP values — contribution of each feature relative to the model baseline.</p>
-              <div id="shap-chart"></div>
-            </div>
-
-            <div class="result-divider"></div>
-
-            <!-- MAP -->
-            <div class="map-block">
-              <h3>Location</h3>
-              <div id="map"></div>
-            </div>
-
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- MARKET EXPLORER -->
-  <section class="section section-alt" id="explorer">
-    <div class="container">
-      <div class="section-header fade-up">
-        <h2>Market explorer</h2>
-        <p class="section-sub">Aggregate trends across Singapore's 26 HDB towns. Data covers 2017 to 2026.</p>
-      </div>
+    <!-- MARKET EXPLORER -->
+    <section class="section section-alt" id="explorer">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>Market explorer</h2>
+          <p class="section-sub">
+            Aggregate trends across Singapore's 26 HDB towns. Data covers 2017
+            to 2026.
+          </p>
+        </div>
 
-      <div class="explorer-grid">
-        <div class="chart-card fade-up">
-          <h3>Median resale price by town</h3>
-          <div id="town-chart"></div>
-        </div>
-        <div class="chart-card fade-up">
-          <h3>Price trend over time</h3>
-          <div id="trend-chart"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="section" id="about">
-    <div class="container">
-      <div class="section-header fade-up">
-        <h2>About the model</h2>
-      </div>
-      <div class="about-grid">
-        <div class="about-col fade-up">
-          <h3>Architecture</h3>
-          <p>Four XGBoost models are trained: a baseline with squared error loss, and three quantile regression models at the 10th, 50th, and 90th percentile. The baseline is used exclusively for SHAP computation. The displayed prediction uses q50, with q10 and q90 forming an 80% confidence interval from the same pinball loss family.</p>
-          <p>Training data covers 233,055 HDB resale transactions from 2017 to 2026, CPI-adjusted to 2024 dollars using SingStat monthly index data.</p>
-        </div>
-        <div class="about-col fade-up">
-          <h3>Features</h3>
-          <p>72 input features across four groups: flat attributes (storey, floor area, remaining lease), categorical dummies (26 towns, 21 flat models), and 15 geospatial distance features covering MRT stations, primary schools, malls, hawker centres, bus stops, and expressways.</p>
-          <p>MRT stations and hawker centres are filtered by opening date to prevent data leakage — a station that opened in 2022 is not counted for transactions before that date.</p>
-        </div>
-        <div class="about-col fade-up">
-          <h3>Performance</h3>
-          <div class="metric-row"><span class="metric-val">3.56%</span><span class="metric-label">MAPE on held-out test set</span></div>
-          <div class="metric-row"><span class="metric-val">SGD 19,894</span><span class="metric-label">MAE (2024 dollars)</span></div>
-          <div class="metric-row"><span class="metric-val">0.979</span><span class="metric-label">R² score</span></div>
-          <div class="metric-row"><span class="metric-val">233,055</span><span class="metric-label">Training transactions</span></div>
-        </div>
-        <div class="about-col fade-up">
-          <h3>Limitations</h3>
-          <p>The model does not capture unit-level factors: interior condition, renovation quality, facing direction, or view. These can account for SGD 20,000–50,000 in price difference between similar units on the same floor.</p>
-          <p>Confidence intervals reflect model uncertainty, not full market uncertainty. Sudden policy changes are not anticipated. Predictions are in 2024 dollars and converted to nominal at display time.</p>
+        <div class="explorer-grid">
+          <div class="chart-card fade-up">
+            <h3>Median resale price by town</h3>
+            <div id="town-chart"></div>
+          </div>
+          <div class="chart-card fade-up">
+            <h3>Price trend over time</h3>
+            <div id="trend-chart"></div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container footer-inner">
-      <span>ResaleRadar &mdash; Xiyan M</span>
-      <span>XGBoost · FastAPI · AWS SageMaker</span>
-      <a href="https://github.com/XiyanM/resaleradar" target="_blank" rel="noopener">GitHub</a>
-    </div>
-  </footer>
+    <!-- ABOUT -->
+    <section class="section" id="about">
+      <div class="container">
+        <div class="section-header fade-up">
+          <h2>About the model</h2>
+        </div>
+        <div class="about-grid">
+          <div class="about-col fade-up">
+            <h3>Architecture</h3>
+            <p>
+              Four XGBoost models are trained: a baseline with squared error
+              loss, and three quantile regression models at the 10th, 50th, and
+              90th percentile. The baseline is used exclusively for SHAP
+              computation. The displayed prediction uses q50, with q10 and q90
+              forming an 80% confidence interval from the same pinball loss
+              family.
+            </p>
+            <p>
+              Training data covers 233,055 HDB resale transactions from 2017 to
+              2026, CPI-adjusted to 2024 dollars using SingStat monthly index
+              data.
+            </p>
+          </div>
+          <div class="about-col fade-up">
+            <h3>Features</h3>
+            <p>
+              72 input features across four groups: flat attributes (storey,
+              floor area, remaining lease), categorical dummies (26 towns, 21
+              flat models), and 15 geospatial distance features covering MRT
+              stations, primary schools, malls, hawker centres, bus stops, and
+              expressways.
+            </p>
+            <p>
+              MRT stations and hawker centres are filtered by opening date to
+              prevent data leakage — a station that opened in 2022 is not
+              counted for transactions before that date.
+            </p>
+          </div>
+          <div class="about-col fade-up">
+            <h3>Performance</h3>
+            <div class="metric-row">
+              <span class="metric-val">3.56%</span
+              ><span class="metric-label">MAPE on held-out test set</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-val">SGD 19,894</span
+              ><span class="metric-label">MAE (2024 dollars)</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-val">0.979</span
+              ><span class="metric-label">R² score</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-val">233,055</span
+              ><span class="metric-label">Training transactions</span>
+            </div>
+          </div>
+          <div class="about-col fade-up">
+            <h3>Limitations</h3>
+            <p>
+              The model does not capture unit-level factors: interior condition,
+              renovation quality, facing direction, or view. These can account
+              for SGD 20,000–50,000 in price difference between similar units on
+              the same floor.
+            </p>
+            <p>
+              Confidence intervals reflect model uncertainty, not full market
+              uncertainty. Sudden policy changes are not anticipated.
+              Predictions are in 2024 dollars and converted to nominal at
+              display time.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-  <!-- SCRIPTS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.32.0/plotly.min.js"></script>
-  <script src="app.js"></script>
-</body>
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>ResaleRadar &mdash; Xiyan M</span>
+        <span>XGBoost · FastAPI · AWS SageMaker</span>
+        <a
+          href="https://github.com/XiyanM/resaleradar"
+          target="_blank"
+          rel="noopener"
+          >GitHub</a
+        >
+      </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.32.0/plotly.min.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>

@@ -290,7 +290,7 @@ function formatFeatureName(name) {
   return name.replace(/_/g, " ");
 }
 
-function initOrUpdateMap(lat, lon) {
+function initOrUpdateMap(lat, lon, nearestAmenities) {
   if (!leafletMap) {
     leafletMap = L.map("map", {
       zoomControl: true,
@@ -308,16 +308,62 @@ function initOrUpdateMap(lat, lon) {
   } else {
     leafletMap.setView([lat, lon], 15);
     if (flatMarker) leafletMap.removeLayer(flatMarker);
+    if (leafletMap._amenityMarkers) {
+      leafletMap._amenityMarkers.forEach((m) => leafletMap.removeLayer(m));
+    }
   }
 
-  const icon = L.divIcon({
+  // Flat marker
+  const flatIcon = L.divIcon({
     className: "",
-    html: `<div style="width:14px;height:14px;border-radius:50%;background:#00A896;border:2.5px solid #fff;box-shadow:0 0 0 2px #00A896;"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    html: `<div style="width:16px;height:16px;border-radius:50%;background:#00A896;border:2.5px solid #fff;box-shadow:0 0 0 1.5px #00A896;cursor:pointer;"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
   });
+  flatMarker = L.marker([lat, lon], { icon: flatIcon })
+    .bindPopup("<strong>Selected flat</strong>")
+    .addTo(leafletMap);
 
-  flatMarker = L.marker([lat, lon], { icon }).addTo(leafletMap);
+  // Amenity markers
+  const amenityConfigs = {
+    mrt: { color: "#E74C3C", label: "MRT" },
+    school: { color: "#3498DB", label: "School" },
+    hawker: { color: "#F39C12", label: "Hawker" },
+    mall: { color: "#9B59B6", label: "Mall" },
+  };
+
+  leafletMap._amenityMarkers = [];
+
+  if (nearestAmenities) {
+    Object.entries(amenityConfigs).forEach(([type, config]) => {
+      const amenity = nearestAmenities[type];
+      if (!amenity || amenity.lat === null) return;
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:${config.color};border:2px solid #fff;box-shadow:0 0 0 1.5px ${config.color};cursor:pointer;"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+
+      const marker = L.marker([amenity.lat, amenity.lon], { icon })
+        .bindPopup(`<strong>${config.label}</strong><br>${amenity.name}`)
+        .addTo(leafletMap);
+
+      leafletMap._amenityMarkers.push(marker);
+    });
+  }
+
+  // Fit map to show all markers
+  const allPoints = [
+    [lat, lon],
+    ...Object.values(nearestAmenities || {})
+      .filter((a) => a && a.lat !== null)
+      .map((a) => [a.lat, a.lon]),
+  ];
+  if (allPoints.length > 1) {
+    leafletMap.fitBounds(allPoints, { padding: [30, 30], maxZoom: 16 });
+  }
 }
 
 async function runPrediction(overridePayload = null) {
@@ -398,7 +444,7 @@ function displayResults(data, lat, lon, payload) {
 
   syncSliders(payload);
   if (data.shap_values) renderSHAP(data.shap_values);
-  initOrUpdateMap(lat, lon);
+  initOrUpdateMap(lat, lon, data.nearest_amenities);
 }
 
 function syncSliders(payload) {
