@@ -6,35 +6,6 @@
 
 const API_BASE = "http://127.0.0.1:8000";
 
-const TOWNS = [
-  "ANG MO KIO",
-  "BEDOK",
-  "BISHAN",
-  "BUKIT BATOK",
-  "BUKIT MERAH",
-  "BUKIT PANJANG",
-  "BUKIT TIMAH",
-  "CENTRAL AREA",
-  "CHOA CHU KANG",
-  "CLEMENTI",
-  "GEYLANG",
-  "HOUGANG",
-  "JURONG EAST",
-  "JURONG WEST",
-  "KALLANG/WHAMPOA",
-  "MARINE PARADE",
-  "PASIR RIS",
-  "PUNGGOL",
-  "QUEENSTOWN",
-  "SEMBAWANG",
-  "SENGKANG",
-  "SERANGOON",
-  "TAMPINES",
-  "TOA PAYOH",
-  "WOODLANDS",
-  "YISHUN",
-];
-
 const FLAT_MODELS = [
   "Improved",
   "New Generation",
@@ -107,14 +78,6 @@ function initScrollAnimations() {
 }
 
 function initDropdowns() {
-  const townSelect = document.getElementById("town");
-  TOWNS.forEach((t) => {
-    const opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = toTitleCase(t);
-    townSelect.appendChild(opt);
-  });
-
   const modelSelect = document.getElementById("flat_model");
   FLAT_MODELS.forEach((m) => {
     const opt = document.createElement("option");
@@ -154,7 +117,10 @@ async function geocodeAddress(address) {
     );
   }
   const top = data.results[0];
-  return { lat: parseFloat(top.LATITUDE), lon: parseFloat(top.LONGITUDE) };
+  return {
+    lat: parseFloat(top.LATITUDE),
+    lon: parseFloat(top.LONGITUDE),
+  };
 }
 
 function buildPayload(lat, lon) {
@@ -175,9 +141,6 @@ function buildPayload(lat, lon) {
   );
   if (isNaN(floor_area_sqm)) throw new Error("Floor area is required.");
 
-  const town = document.getElementById("town").value;
-  if (!town) throw new Error("Town is required.");
-
   const flat_type = document.getElementById("flat_type").value;
   if (!flat_type) throw new Error("Flat type is required.");
 
@@ -192,7 +155,6 @@ function buildPayload(lat, lon) {
   }
 
   return {
-    town,
     flat_type,
     flat_model,
     storey_midpoint,

@@ -19,11 +19,9 @@ FLAT_MODELS = [
     "Terrace", "Type S1", "Type S2",
 ]
 
-
 class PredictRequest(BaseModel):
     lat: float
     lon: float
-    town: str
     flat_type: str
     flat_model: str
     floor_area_sqm: float
@@ -34,6 +32,7 @@ class PredictRequest(BaseModel):
     remaining_lease_years: Optional[float] = None
     feature_overrides: Optional[dict[str, float]] = None
 
+
 class PredictResponse(BaseModel):
     predicted_price: float
     lower_bound: float
@@ -42,3 +41,4 @@ class PredictResponse(BaseModel):
     quantile_crossing: bool
     feature_values: dict[str, float]
     nearest_amenities: dict
+    inferred_town: str

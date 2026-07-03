@@ -36,6 +36,17 @@ _malls    = pd.read_csv(DATA_DIR / "malls_geocoded.csv")
 _buses    = pd.read_csv(DATA_DIR / "bus_stops.csv")
 _expy     = pd.read_csv(DATA_DIR / "expressway_coords.csv")
 
+# ── Block-town lookup (for town inference from lat/lon) ───────────────────────
+_block_town = pd.read_csv(DATA_DIR / "geocoded_addresses.csv").merge(
+    pd.read_csv(BASE_DIR / "data" / "raw" / "hdb_resale_transactions.csv",
+                usecols=["block", "street_name", "town"]).drop_duplicates(subset=["block", "street_name"]),
+    on=["block", "street_name"],
+    how="left"
+)
+_block_town_lats = _block_town["latitude"].values
+_block_town_lons = _block_town["longitude"].values
+_block_town_towns = _block_town["town"].values
+
 # ── Mature estates ────────────────────────────────────────────────────────────
 
 MATURE_ESTATES = {
@@ -93,6 +104,11 @@ def _haversine(lat1: float, lon1: float, lats: np.ndarray, lons: np.ndarray) -> 
     dlon = np.radians(lons - lon1)
     a = np.sin(dlat / 2) ** 2 + np.cos(np.radians(lat1)) * np.cos(np.radians(lats)) * np.sin(dlon / 2) ** 2
     return R * 2 * np.arcsin(np.sqrt(a))
+
+def _infer_town(lat: float, lon: float) -> str:
+    """Return the HDB town of the nearest geocoded block to the given coordinates."""
+    dists = _haversine(lat, lon, _block_town_lats, _block_town_lons)
+    return str(_block_town_towns[dists.argmin()])
 
 # ── Geo feature computation ───────────────────────────────────────────────────
 
@@ -221,8 +237,8 @@ def predict(req: dict) -> dict:
     # Derived scalar features
     remaining_lease_years = req.get("remaining_lease_years") or (99 - (req["transaction_year"] - req["lease_commence_date"]))
     flat_type_encoded     = FLAT_TYPE_MAP[req["flat_type"]]
-    is_mature_estate      = 1 if req["town"] in MATURE_ESTATES else 0
-
+    town = _infer_town(req["lat"], req["lon"])
+    is_mature_estate = 1 if town in MATURE_ESTATES else 0
     # Assemble feature dict
     features = {
         "floor_area_sqm":        req["floor_area_sqm"],
@@ -233,7 +249,7 @@ def predict(req: dict) -> dict:
         "remaining_lease_years": remaining_lease_years,
         "flat_type_encoded":     flat_type_encoded,
         "is_mature_estate":      is_mature_estate,
-        "town":                  req["town"],
+        "town":                  town,
         "flat_model":            req["flat_model"],
         **geo,
     }
@@ -269,5 +285,6 @@ def predict(req: dict) -> dict:
         "shap_values":       shap_dict,
         "quantile_crossing": crossing,
         "feature_values":    feature_values,
-        "nearest_amenities":  nearest_amenities,
+        "nearest_amenities": nearest_amenities,
+        "inferred_town":     town,
     }
