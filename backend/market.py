@@ -1,6 +1,9 @@
 from pathlib import Path
 from functools import lru_cache
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR  = Path(__file__).parent.parent
 DATA_DIR  = BASE_DIR / "data"
@@ -43,7 +46,8 @@ def get_market_data() -> dict:
     # Find the "All Items" row
     all_items = cpi_df[cpi_df.iloc[:, 0].str.strip() == "All Items"]
     if all_items.empty:
-        current_cpi = 100.662  # fallback to base cpi if current value is unavailable
+        logger.warning("CPI lookup failed: 'All Items' row not found in cpi.csv. Falling back to base_cpi (no adjustment applied).")
+        current_cpi = 100.662  # fallback to base CPI — no adjustment applied if current value unavailable
     else:
         row = all_items.iloc[0, 1:]  # skip the label column
         # Drop 'na' strings and get the last valid value
