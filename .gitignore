@@ -26,3 +26,12 @@ Thumbs.db
 .vscode/
 .idea/
 AWSCLIV2.pkg
+
+# Data (raw source only — processed data needed at runtime is tracked)
+data/raw/national_map_lines.geojson
+data/raw/bus_stops.geojson
+data/raw/hawker_centres.geojson
+data/raw/malls.csv
+data/raw/mrt_stations.csv
+data/raw/schools.csv
+data/processed/features.csv

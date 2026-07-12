@@ -37,6 +37,65 @@ let flatMarker = null;
 let currentCPI = 102.052; // fallback until /market-data loads
 let baseCPI = 100.662; // fallback until /market-data loads
 
+function initHeroDotGrid() {
+  const canvas = document.getElementById("heroDotGrid");
+  const hero = document.querySelector(".hero");
+  if (!canvas || !hero) return;
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  const ctx = canvas.getContext("2d");
+  const spacing = 24;
+  let dots = [];
+
+  function buildDots() {
+    const rect = hero.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    dots = [];
+    for (let x = spacing / 2; x < canvas.width; x += spacing) {
+      for (let y = spacing / 2; y < canvas.height; y += spacing) {
+        dots.push({ x, y, phase: Math.random() * Math.PI * 2 });
+      }
+    }
+  }
+  buildDots();
+  window.addEventListener("resize", buildDots);
+
+  function drawStatic() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dots.forEach((d) => {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 1.1, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(15, 25, 35, 0.14)";
+      ctx.fill();
+    });
+  }
+
+  if (prefersReducedMotion) {
+    drawStatic();
+    return;
+  }
+
+  function draw(time) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dots.forEach((d) => {
+      const pulse = (Math.sin(time * 0.0006 + d.phase) + 1) / 2; // 0..1
+      const alpha = 0.06 + pulse * 0.18;
+      const size = 0.9 + pulse * 0.6;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(15, 25, 35, ${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+}
+
+document.addEventListener("DOMContentLoaded", initHeroDotGrid);
 function showChartLoadingState() {
   document.getElementById("town-chart").innerHTML =
     '<div class="chart-status">Loading market data…</div>';
