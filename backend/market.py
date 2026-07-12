@@ -43,7 +43,7 @@ def get_market_data() -> dict:
     # Find the "All Items" row
     all_items = cpi_df[cpi_df.iloc[:, 0].str.strip() == "All Items"]
     if all_items.empty:
-        current_cpi = 102.052  # fallback to base year
+        current_cpi = 100.662  # fallback to base cpi if current value is unavailable
     else:
         row = all_items.iloc[0, 1:]  # skip the label column
         # Drop 'na' strings and get the last valid value
