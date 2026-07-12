@@ -512,6 +512,9 @@ const HOVER_LABEL = {
 function renderExplorerCharts(townMedians, trendLabels, trendValues) {
   if (!townMedians || !trendLabels || !trendValues) return;
 
+  document.getElementById("town-chart").innerHTML = "";
+  document.getElementById("trend-chart").innerHTML = "";
+
   const towns = Object.keys(townMedians).sort(
     (a, b) => townMedians[b] - townMedians[a]
   );
