@@ -284,7 +284,7 @@ function renderSHAP(shapValues) {
     hoverlabel: {
       bgcolor: "#0F1923",
       bordercolor: "#0F1923",
-      font: { family: "Inter", size: 13, color: "#ffffff" },
+      font: { family: "Roboto", size: 13, color: "#ffffff" },
       align: "left",
     },
   };
@@ -294,22 +294,22 @@ function renderSHAP(shapValues) {
     xaxis: {
       title: {
         text: "SHAP value (SGD)",
-        font: { size: 12, family: "Inter", color: "#6B7A8D" },
+        font: { size: 12, family: "Roboto", color: "#6B7A8D" },
       },
-      tickfont: { size: 12, family: "Inter", color: "#6B7A8D" },
+      tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
       gridcolor: "#E2E8EF",
       zeroline: true,
       zerolinecolor: "#CBD5DF",
       zerolinewidth: 1.5,
     },
     yaxis: {
-      tickfont: { size: 12, family: "Inter", color: "#0F1923" },
+      tickfont: { size: 12, family: "Roboto", color: "#0F1923" },
       automargin: true,
     },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     height: 320,
-    font: { family: "Inter", color: "#0F1923" },
+    font: { family: "Roboto", color: "#0F1923" },
     showlegend: false,
     bargap: 0.35,
   };
@@ -564,7 +564,7 @@ function onSliderChange() {
 const HOVER_LABEL = {
   bgcolor: "#0F1923",
   bordercolor: "#0F1923",
-  font: { family: "Inter", size: 13, color: "#ffffff" },
+  font: { family: "Roboto", size: 13, color: "#ffffff" },
   align: "left",
 };
 
@@ -597,16 +597,16 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
       margin: { t: 8, b: 48, l: 148, r: 24 },
       xaxis: {
         range: [0, maxPrice * 1.05],
-        tickfont: { size: 12, family: "Inter", color: "#6B7A8D" },
+        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
         gridcolor: "#E2E8EF",
         tickformat: ",.0f",
         title: {
           text: "Median resale price (SGD)",
-          font: { size: 12, family: "Inter", color: "#6B7A8D" },
+          font: { size: 12, family: "Roboto", color: "#6B7A8D" },
         },
       },
       yaxis: {
-        tickfont: { size: 12, family: "Inter", color: "#0F1923" },
+        tickfont: { size: 12, family: "Roboto", color: "#0F1923" },
         automargin: true,
         ticklabelposition: "outside left",
         ticksuffix: "  ",
@@ -614,7 +614,7 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: 460,
-      font: { family: "Inter", color: "#0F1923" },
+      font: { family: "Roboto", color: "#0F1923" },
       showlegend: false,
       bargap: 0.3,
     },
@@ -637,22 +637,22 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
     {
       margin: { t: 8, b: 48, l: 80, r: 24 },
       xaxis: {
-        tickfont: { size: 12, family: "Inter", color: "#6B7A8D" },
+        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
         gridcolor: "#E2E8EF",
       },
       yaxis: {
-        tickfont: { size: 12, family: "Inter", color: "#6B7A8D" },
+        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
         tickformat: ",.0f",
         gridcolor: "#E2E8EF",
         title: {
           text: "Median resale price (SGD)",
-          font: { size: 12, family: "Inter", color: "#6B7A8D" },
+          font: { size: 12, family: "Roboto", color: "#6B7A8D" },
         },
       },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: 460,
-      font: { family: "Inter", color: "#0F1923" },
+      font: { family: "Roboto", color: "#0F1923" },
       showlegend: false,
     },
     { responsive: true, displayModeBar: false }
