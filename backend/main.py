@@ -8,11 +8,10 @@ app = FastAPI(title="ResaleRadar API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://resaleradar-frontend.onrender.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.get("/health")
 def health():
