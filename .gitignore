@@ -8,15 +8,13 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
-# Data (too large for GitHub)
-data/raw/
-data/processed/
-*.csv
+# Data (raw source only — processed data needed at runtime is tracked)
+data/raw/national_map_lines.geojson
 
 # Models (too large for GitHub)
 models/*.pkl
 
-# AWS credentials (never push these)
+# AWS credentials 
 .aws/
 credentials
 
@@ -26,4 +24,5 @@ Thumbs.db
 
 # IDE
 .vscode/
-.idea/AWSCLIV2.pkg
+.idea/
+AWSCLIV2.pkg
