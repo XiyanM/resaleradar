@@ -692,3 +692,28 @@ input[type="range"]::-moz-range-thumb {
 .footer a:hover {
   color: var(--teal);
 }
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+
+.chart-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.chart-status-error button {
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: "Inter", sans-serif;
+}

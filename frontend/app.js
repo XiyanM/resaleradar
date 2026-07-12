@@ -37,7 +37,26 @@ let flatMarker = null;
 let currentCPI = 102.052; // fallback until /market-data loads
 let baseCPI = 100.662; // fallback until /market-data loads
 
-async function fetchMarketData() {
+function showChartLoadingState() {
+  document.getElementById("town-chart").innerHTML =
+    '<div class="chart-status">Loading market data…</div>';
+  document.getElementById("trend-chart").innerHTML =
+    '<div class="chart-status">Loading market data…</div>';
+}
+
+function showChartErrorState() {
+  const msg =
+    '<div class="chart-status chart-status-error">Unable to load market data. <button onclick="fetchMarketData()">Retry</button></div>';
+  document.getElementById("town-chart").innerHTML = msg;
+  document.getElementById("trend-chart").innerHTML = msg;
+}
+
+async function fetchMarketData(attempt = 1) {
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAY_MS = 4000; // backend cold start can take up to ~60s; a few short retries covers most cases without a long single wait
+
+  if (attempt === 1) showChartLoadingState();
+
   try {
     const res = await fetch(`${API_BASE}/market-data`);
     if (!res.ok) throw new Error("Failed to fetch market data");
@@ -51,13 +70,16 @@ async function fetchMarketData() {
     );
   } catch (err) {
     console.warn(
-      "Market data fetch failed, using fallback values:",
+      `Market data fetch failed (attempt ${attempt}/${MAX_ATTEMPTS}):`,
       err.message
     );
-    renderExplorerCharts(null, null, null);
+    if (attempt < MAX_ATTEMPTS) {
+      setTimeout(() => fetchMarketData(attempt + 1), RETRY_DELAY_MS);
+    } else {
+      showChartErrorState();
+    }
   }
 }
-
 function initScrollAnimations() {
   const observer = new IntersectionObserver(
     (entries) => {
