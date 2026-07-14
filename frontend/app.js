@@ -589,6 +589,8 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
   document.getElementById("town-chart").innerHTML = "";
   document.getElementById("trend-chart").innerHTML = "";
 
+  const isMobile = window.innerWidth < 640;
+
   const towns = Object.keys(townMedians).sort(
     (a, b) => townMedians[b] - townMedians[a]
   );
@@ -609,33 +611,47 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
       },
     ],
     {
-      margin: { t: 8, b: 48, l: 148, r: 24 },
+      margin: isMobile
+        ? { t: 8, b: 60, l: 100, r: 12 }
+        : { t: 8, b: 48, l: 148, r: 24 },
       xaxis: {
         range: [0, maxPrice * 1.05],
-        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
+        tickfont: {
+          size: isMobile ? 10 : 12,
+          family: "Roboto",
+          color: "#6B7A8D",
+        },
         gridcolor: "#E2E8EF",
         tickformat: ",.0f",
+        tickangle: isMobile ? -45 : 0,
         title: {
           text: "Median resale price (SGD)",
-          font: { size: 12, family: "Roboto", color: "#6B7A8D" },
+          font: {
+            size: isMobile ? 10 : 12,
+            family: "Roboto",
+            color: "#6B7A8D",
+          },
         },
       },
       yaxis: {
-        tickfont: { size: 12, family: "Roboto", color: "#0F1923" },
+        tickfont: {
+          size: isMobile ? 10 : 12,
+          family: "Roboto",
+          color: "#0F1923",
+        },
         automargin: true,
         ticklabelposition: "outside left",
         ticksuffix: "  ",
       },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
-      height: 460,
+      height: isMobile ? 520 : 460,
       font: { family: "Roboto", color: "#0F1923" },
       showlegend: false,
       bargap: 0.3,
     },
     { responsive: true, displayModeBar: false }
   );
-
   Plotly.newPlot(
     "trend-chart",
     [
