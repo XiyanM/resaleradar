@@ -257,6 +257,21 @@ body {
   }
 }
 
+@media (max-width: 640px) {
+  .nav {
+    padding: 0 1.25rem;
+  }
+  .nav-logo {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .nav-links {
+    gap: 1.1rem;
+  }
+  .nav-links a {
+    font-size: 13px;
+  }
+}
 /* =========================================================
    FORM
    ========================================================= */
@@ -302,6 +317,11 @@ select {
   transition: border-color 0.15s, box-shadow 0.15s;
   appearance: auto;
   height: 44px;
+}
+
+input[type="month"] {
+  -webkit-appearance: textfield;
+  min-height: 44px;
 }
 
 input[type="text"]:focus,
@@ -539,6 +559,7 @@ input[type="range"]::-moz-range-thumb {
    ========================================================= */
 
 #map {
+  position: relative; /* add this line */
   height: 280px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
@@ -583,6 +604,21 @@ input[type="range"]::-moz-range-thumb {
 }
 .map-block {
   padding-bottom: 0.5rem;
+}
+
+.map-tap-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 25, 35, 0.82);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* =========================================================

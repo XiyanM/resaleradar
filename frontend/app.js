@@ -356,10 +356,25 @@ function formatFeatureName(name) {
 
 function initOrUpdateMap(lat, lon, nearestAmenities) {
   if (!leafletMap) {
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
     leafletMap = L.map("map", {
       zoomControl: true,
       scrollWheelZoom: false,
+      dragging: !isTouchDevice,
+      tap: !isTouchDevice,
     }).setView([lat, lon], 15);
+
+    if (isTouchDevice) {
+      const hint = document.getElementById("mapTapHint");
+      hint.classList.remove("hidden");
+      leafletMap.once("click", () => {
+        leafletMap.dragging.enable();
+        leafletMap.tap && leafletMap.tap.enable();
+        hint.classList.add("hidden");
+      });
+    }
+
     L.tileLayer(
       "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
       {
