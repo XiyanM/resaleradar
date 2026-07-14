@@ -305,8 +305,13 @@ select {
 }
 
 input[type="month"] {
-  -webkit-appearance: textfield;
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  height: 44px;
   min-height: 44px;
+  box-sizing: border-box;
 }
 
 input[type="text"]:focus,
