@@ -76,7 +76,9 @@ def train_and_save(args):
 
     X = df_features.drop(columns=["resale_price_real"])
     y = df_features["resale_price_real"]
-
+    MONOTONIC_INCREASING = {"remaining_lease_years"}
+    monotone_constraints = tuple(1 if col in MONOTONIC_INCREASING else 0 for col in X.columns)
+    monotone_str = "(" + ",".join(str(v) for v in monotone_constraints) + ")"
     X_temp, X_test, y_temp, y_test = train_test_split(
         X, y, test_size=0.2, random_state=44
     )
@@ -96,6 +98,7 @@ def train_and_save(args):
         eval_metric="rmse",
         early_stopping_rounds=50,
         tree_method="hist",
+        monotone_constraints=monotone_str,
     )
     model_baseline.fit(
         X_train, y_train,
@@ -116,6 +119,8 @@ def train_and_save(args):
             tree_method="hist",
             random_state=44,
             early_stopping_rounds=50,
+            monotone_constraints=monotone_str,
+            max_bin=512,
         )
         model_q.fit(
             X_train, y_train,
