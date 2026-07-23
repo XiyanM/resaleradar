@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 import shap
+from sklearn.isotonic import IsotonicRegression
 
 from backend.schemas import TOWNS, FLAT_MODELS
 
@@ -77,7 +78,7 @@ CBD_LON = 103.8511
 
 FEATURE_NAMES = (
     [
-        "floor_area_sqm", "lease_commence_date", "year", "transaction_month",
+        "floor_area_sqm", "year", "transaction_month",
         "storey_midpoint", "remaining_lease_years", "flat_type_encoded",
         "dist_nearest_mrt", "num_mrt_within_1km", "num_mrt_within_2km",
         "dist_nearest_school", "num_schools_within_1km",
@@ -221,6 +222,25 @@ def _expand_categoricals(features: dict) -> dict:
     del features["town"]
     del features["flat_model"]
     return features
+# ── Monotonic-lease-corrected quantile prediction ─────────────────────────────
+
+_LEASE_FEATURE_IDX = FEATURE_NAMES.index("remaining_lease_years")
+_LEASE_GRID = np.arange(1, 100, dtype=np.float32)  # full valid lease range, 1..99 years
+
+def _monotonic_lease_predict(model: xgb.Booster, features: dict) -> float:
+
+    base_row = np.array([features[f] for f in FEATURE_NAMES], dtype=np.float32)
+    rows = np.tile(base_row, (len(_LEASE_GRID), 1))
+    rows[:, _LEASE_FEATURE_IDX] = _LEASE_GRID
+
+    dmat = xgb.DMatrix(rows, feature_names=FEATURE_NAMES)
+    raw_preds = model.predict(dmat)
+
+    iso = IsotonicRegression(increasing=True, out_of_bounds="clip")
+    corrected = iso.fit_transform(_LEASE_GRID, raw_preds)
+
+    requested_lease = features["remaining_lease_years"]
+    return float(np.interp(requested_lease, _LEASE_GRID, corrected))
 
 # ── Main predict function ─────────────────────────────────────────────────────
 
@@ -242,7 +262,6 @@ def predict(req: dict) -> dict:
     # Assemble feature dict
     features = {
         "floor_area_sqm":        req["floor_area_sqm"],
-        "lease_commence_date":   req["lease_commence_date"],
         "year":                  req["transaction_year"],
         "transaction_month":     req["transaction_month"],
         "storey_midpoint":       req["storey_midpoint"],
@@ -266,10 +285,10 @@ def predict(req: dict) -> dict:
     values  = np.array([[features[f] for f in FEATURE_NAMES]], dtype=np.float32)
     dmatrix = xgb.DMatrix(values, feature_names=FEATURE_NAMES)
 
-    # Quantile predictions
-    q10 = float(model_q10.predict(dmatrix)[0])
-    q50 = float(model_q50.predict(dmatrix)[0])
-    q90 = float(model_q90.predict(dmatrix)[0])
+    # Quantile predictions — isotonic-corrected to guarantee monotonicity in lease
+    q10 = _monotonic_lease_predict(model_q10, features)
+    q50 = _monotonic_lease_predict(model_q50, features)
+    q90 = _monotonic_lease_predict(model_q90, features)
 
     crossing = not (q10 <= q50 <= q90)
     lower_bound, predicted_price, upper_bound = sorted([q10, q50, q90])
