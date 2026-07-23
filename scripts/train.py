@@ -39,7 +39,6 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     df_features = pd.DataFrame({
         "floor_area_sqm": df["floor_area_sqm"],
-        "lease_commence_date": df["lease_commence_date"],
         "year": df["month"].str[:4].astype(int),
         "transaction_month": df["month"].str[5:7].astype(int),
         "storey_midpoint": df["storey_midpoint"],
