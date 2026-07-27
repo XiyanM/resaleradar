@@ -34,5 +34,5 @@ data/raw/hawker_centres.geojson
 data/raw/malls.csv
 data/raw/mrt_stations.csv
 data/raw/schools.csv
-data/processed/features.csvlambda/refresh_data/function.zip
+data/processed/features.csv
 lambda/refresh_data/function.zip
