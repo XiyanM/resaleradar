@@ -1,3 +1,4 @@
+
 import io
 import json
 import logging
@@ -101,7 +102,7 @@ def _write_json_to_s3(bucket: str, key: str, data: dict) -> None:
 
 
 def _write_model_to_s3(model: xgb.XGBRegressor, bucket: str, key: str) -> None:
-    # write to Lambda's writable /tmp first, then uploadto S3.
+    # write to Lambda's writable /tmp first, then upload that file to S3.
     tmp_path = f"/tmp/{key.split('/')[-1]}"
     model.save_model(tmp_path)
     s3.upload_file(tmp_path, bucket, key)
@@ -151,17 +152,24 @@ def train_candidate(bucket: str, features_key: str):
         quantile_models[q] = model_q
         logger.info("  Done. Best iteration: %s", model_q.best_iteration)
 
-    # Evaluate the q50 model against the real held-out test set
+    
     y_pred_test = quantile_models[0.5].predict(X_test)
     test_mape = _mape(y_test.values, y_pred_test)
     test_rmse = float(np.sqrt(np.mean((y_test.values - y_pred_test) ** 2)))
 
-    logger.info("Candidate test MAPE: %.2f%% | RMSE: %.2f", test_mape, test_rmse)
+    y_pred_baseline = model_baseline.predict(X_test)
+    baseline_mape = _mape(y_test.values, y_pred_baseline)
+    baseline_rmse = float(np.sqrt(np.mean((y_test.values - y_pred_baseline) ** 2)))
+
+    logger.info("Candidate q50 test MAPE: %.2f%% | RMSE: %.2f", test_mape, test_rmse)
+    logger.info("Candidate baseline test MAPE: %.2f%% | RMSE: %.2f", baseline_mape, baseline_rmse)
 
     models = {"baseline": model_baseline, **quantile_models}
     metrics = {
         "mape": test_mape,
         "rmse": test_rmse,
+        "baseline_mape": baseline_mape,
+        "baseline_rmse": baseline_rmse,
         "trained_at": datetime.now(timezone.utc).isoformat(),
         "feature_count": X_train.shape[1],
     }
