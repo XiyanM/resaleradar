@@ -3,7 +3,8 @@ Monthly data refresh Lambda for ResaleRadar.
 
 Triggered by an EventBridge scheduled rule. Downloads the latest HDB resale
 transactions and CPI datasets from data.gov.sg and overwrites the raw-data/
-files in S3. Both datasets are always downloaded as a full snapshot
+files in S3. Both datasets are always downloaded as a full snapshot (not an
+incremental diff), so a straight overwrite is correct -- no merge logic needed.
 """
 
 import json
@@ -39,7 +40,6 @@ REQUEST_HEADERS = {
 
 
 def _api_get(path: str, max_retries: int = 3, retry_wait_seconds: int = 15) -> dict:
-
     url = API_HOST + path
     for attempt in range(max_retries + 1):
         req = urllib.request.Request(url, headers=REQUEST_HEADERS)
@@ -94,6 +94,12 @@ def _upload_to_s3(csv_bytes: bytes, filename: str, bucket: str, prefix: str) -> 
     logger.info("Uploaded %d bytes to s3://%s/%s", len(csv_bytes), bucket, key)
 
 
+def _trigger_render_redeploy(hook_url: str) -> None:
+    req = urllib.request.Request(hook_url, method="POST")
+    with urllib.request.urlopen(req, timeout=15) as response:
+        logger.info("Render redeploy triggered, status=%s", response.status)
+
+
 def handler(event, context):
     # Read env vars here, not at module scope, so this file can be imported
     # for local testing (e.g. testing _download_dataset_csv directly)
@@ -133,6 +139,19 @@ def handler(event, context):
     try:
         retrain_result = retrain.retrain_and_maybe_promote(s3_bucket)
         results["retrain"] = {"status": "success", **retrain_result}
+
+        if retrain_result.get("promoted"):
+            hook_url = os.environ.get("RENDER_DEPLOY_HOOK_URL")
+            if hook_url:
+                try:
+                    _trigger_render_redeploy(hook_url)
+                    results["redeploy"] = {"status": "triggered"}
+                except Exception as exc:
+                    logger.exception("Failed to trigger Render redeploy")
+                    results["redeploy"] = {"status": "error", "message": str(exc)}
+            else:
+                logger.warning("Model promoted but RENDER_DEPLOY_HOOK_URL not set -- skipping redeploy trigger")
+                results["redeploy"] = {"status": "skipped", "reason": "no hook URL configured"}
     except Exception as exc:
         logger.exception("Retraining failed")
         results["retrain"] = {"status": "error", "message": str(exc)}
