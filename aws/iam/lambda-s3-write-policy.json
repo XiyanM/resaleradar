@@ -3,8 +3,17 @@
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::resaleradar/raw-data/*"
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": [
+        "arn:aws:s3:::resaleradar/raw-data/*",
+        "arn:aws:s3:::resaleradar/processed-data/*",
+        "arn:aws:s3:::resaleradar/models/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::resaleradar/reference-data/*"
     }
   ]
 }
