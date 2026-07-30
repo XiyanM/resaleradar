@@ -1,5 +1,8 @@
 from pathlib import Path
 from datetime import date
+import os
+import tempfile
+import boto3
 import numpy as np
 import pandas as pd
 import xgboost as xgb
@@ -11,15 +14,25 @@ from backend.schemas import TOWNS, FLAT_MODELS
 # ── Paths ────────────────────────────────────────────────────────────────────
 
 BASE_DIR   = Path(__file__).parent.parent
-MODELS_DIR = BASE_DIR / "models"
 DATA_DIR   = BASE_DIR / "data" / "processed"
 
-# ── Load models (once at startup) ────────────────────────────────────────────
+# ── Load models from S3 (once at startup) ────────────────────────────────────
+
+S3_BUCKET = os.environ.get("S3_BUCKET", "resaleradar")
+MODEL_PREFIX = os.environ.get("MODEL_PREFIX", "models/")
+
+_s3 = boto3.client("s3")
+
 
 def _load_model(filename: str) -> xgb.Booster:
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+        _s3.download_fileobj(S3_BUCKET, f"{MODEL_PREFIX}{filename}", tmp)
+        tmp_path = tmp.name
     m = xgb.Booster()
-    m.load_model(MODELS_DIR / filename)
+    m.load_model(tmp_path)
+    os.remove(tmp_path)
     return m
+
 
 model_baseline = _load_model("xgb_geo_baseline.json")
 model_q10      = _load_model("xgb_geo_q10.json")
