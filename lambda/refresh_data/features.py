@@ -127,7 +127,10 @@ def _apply_cpi_adjustment(df: pd.DataFrame, cpi_df: pd.DataFrame) -> pd.DataFram
     cpi_long["transaction_date"] = pd.to_datetime(cpi_long["month_str"], format="%Y%b")
     cpi_long = cpi_long[cpi_long["transaction_date"] >= "2017-01-01"].sort_values("transaction_date")
 
-    base_cpi = cpi_long[cpi_long["transaction_date"] >= "2024-01-01"]["cpi"].mean()
+    base_cpi = cpi_long[
+        (cpi_long["transaction_date"] >= "2024-01-01") &
+        (cpi_long["transaction_date"] < "2025-01-01")
+    ]["cpi"].mean()    
     logger.info("Base CPI (2024 average): %.3f", base_cpi)
 
     df = df.merge(cpi_long[["transaction_date", "cpi"]], on="transaction_date", how="left")
