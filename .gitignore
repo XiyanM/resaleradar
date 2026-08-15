@@ -36,3 +36,4 @@ data/raw/mrt_stations.csv
 data/raw/schools.csv
 data/processed/features.csv
 lambda/refresh_data/function.zip
+data/processed/features_with_geo.csv
