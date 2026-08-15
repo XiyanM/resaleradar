@@ -34,9 +34,9 @@
         <p class="hero-eyebrow">HDB Resale Price Intelligence</p>
         <h1 class="hero-heading">Know what a flat is<br />actually worth.</h1>
         <p class="hero-sub">
-          XGBoost model trained on 233,055 transactions with geospatial
-          enrichment, CPI adjustment, and 80% confidence intervals. 3.56% MAPE
-          on held-out test data.
+          XGBoost model trained on over 236,000 transactions, retrained
+          automatically every month, with geospatial enrichment, CPI adjustment,
+          and 80% confidence intervals. 3.82% MAPE on held-out test data.
         </p>
         <a
           href="#predictor"
@@ -53,8 +53,8 @@
         <div class="section-header fade-up">
           <h2>Price predictor</h2>
           <p class="section-sub">
-            Enter the flat details below. Geocoding and feature computation
-            happen in your browser.
+            Enter the flat details below. Geocoding happens in your browser;
+            feature computation and prediction happen on the server.
           </p>
         </div>
 
@@ -204,7 +204,7 @@
             <!-- RESULTS (hidden until prediction) -->
             <div id="results" class="hidden">
               <div class="result-price-block">
-                <span class="result-label">Estimated price (Jun 2026 SGD)</span>
+                <span class="result-label">Estimated price (current SGD)</span>
                 <div class="result-price" id="result-price">—</div>
                 <div class="result-interval" id="result-interval"></div>
                 <div id="crossing-warning" class="crossing-warning hidden">
@@ -391,15 +391,15 @@
               family.
             </p>
             <p>
-              Training data covers 233,055 HDB resale transactions from 2017 to
-              2026, CPI-adjusted to 2024 dollars using SingStat monthly index
-              data.
+              Training data covers over 236,000 HDB resale transactions from
+              2017 onward, growing automatically each month, CPI-adjusted to
+              2024 dollars using SingStat monthly index data.
             </p>
           </div>
           <div class="about-col fade-up">
             <h3>Features</h3>
             <p>
-              70 input features across four groups: flat attributes (storey,
+              69 input features across four groups: flat attributes (storey,
               floor area, remaining lease), categorical dummies (26 towns, 21
               flat models), and 15 geospatial distance features covering MRT
               stations, primary schools, malls, hawker centres, bus stops, and
@@ -414,19 +414,19 @@
           <div class="about-col fade-up">
             <h3>Performance</h3>
             <div class="metric-row">
-              <span class="metric-val">3.56%</span
+              <span class="metric-val">3.82%</span
               ><span class="metric-label">MAPE on held-out test set</span>
             </div>
             <div class="metric-row">
-              <span class="metric-val">SGD 19,894</span
+              <span class="metric-val">SGD 30,708</span
               ><span class="metric-label">MAE (2024 dollars)</span>
             </div>
             <div class="metric-row">
-              <span class="metric-val">0.979</span
-              ><span class="metric-label">R² score</span>
+              <span class="metric-val">69</span
+              ><span class="metric-label">Input Features</span>
             </div>
             <div class="metric-row">
-              <span class="metric-val">233,055</span
+              <span class="metric-val">236,930+</span
               ><span class="metric-label">Training transactions</span>
             </div>
           </div>
@@ -453,7 +453,7 @@
     <footer class="footer">
       <div class="container footer-inner">
         <span>ResaleRadar &mdash; Xiyan M</span>
-        <span>XGBoost · FastAPI · AWS SageMaker</span>
+        <span>XGBoost · FastAPI · AWS Lambda</span>
         <a
           href="https://github.com/XiyanM/resaleradar"
           target="_blank"

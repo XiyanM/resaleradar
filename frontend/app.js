@@ -34,8 +34,8 @@ let lastPrediction = null;
 let lastPayload = null;
 let leafletMap = null;
 let flatMarker = null;
-let currentCPI = 102.052; // fallback until /market-data loads
-let baseCPI = 100.662; // fallback until /market-data loads
+let currentCPI = 102.858; // fallback until /market-data loads
+let baseCPI = 100.0; // fallback until /market-data loads
 
 function initHeroDotGrid() {
   const canvas = document.getElementById("heroDotGrid");
