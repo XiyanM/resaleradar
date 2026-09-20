@@ -33,6 +33,8 @@ let flatMarker = null;
 let currentCPI = 102.858; // fallback until /market-data loads
 let baseCPI = 100.0; // fallback until /market-data loads
 
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
 function showChartLoadingState() {
   document.getElementById("town-chart").innerHTML =
     '<div class="chart-status">Loading market data…</div>';
@@ -192,20 +194,59 @@ function buildPayload(lat, lon) {
   };
 }
 
+// The price is driven by a critically damped spring (damping 1.0). A new
+// target re-aims the running spring, so value *and* velocity carry through:
+// interrupting mid-count never jumps or restarts from zero.
+const priceSpring = { value: 0, velocity: 0, target: 0, raf: 0, last: 0 };
+const PRICE_RESPONSE = 0.4; // seconds — Apple's "move" spring
+
+function renderPrice(value) {
+  document.getElementById("result-price").textContent =
+    "SGD " + Math.round(value).toLocaleString("en-SG");
+}
+
 function animatePrice(targetValue) {
-  const el = document.getElementById("result-price");
-  const duration = 850;
-  const start = performance.now();
+  const s = priceSpring;
+  s.target = targetValue;
+
+  if (reducedMotion.matches) {
+    cancelAnimationFrame(s.raf);
+    s.raf = 0;
+    s.value = targetValue;
+    s.velocity = 0;
+    renderPrice(targetValue);
+    return;
+  }
+
+  if (s.raf) return; // already running — it will chase the new target
+
+  const omega = (2 * Math.PI) / PRICE_RESPONSE;
+  const SUBSTEP = 1 / 240;
+  s.last = performance.now();
 
   function step(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3);
-    const current = Math.round(targetValue * eased);
-    el.textContent = "SGD " + current.toLocaleString("en-SG");
-    if (progress < 1) requestAnimationFrame(step);
+    let remaining = Math.min((now - s.last) / 1000, 0.05);
+    s.last = now;
+    while (remaining > 0) {
+      const dt = Math.min(remaining, SUBSTEP);
+      const accel =
+        -omega * omega * (s.value - s.target) - 2 * omega * s.velocity;
+      s.velocity += accel * dt;
+      s.value += s.velocity * dt;
+      remaining -= dt;
+    }
+
+    if (Math.abs(s.value - s.target) < 1 && Math.abs(s.velocity) < 20) {
+      s.value = s.target;
+      s.velocity = 0;
+      s.raf = 0;
+      renderPrice(s.value);
+      return;
+    }
+    renderPrice(s.value);
+    s.raf = requestAnimationFrame(step);
   }
-  requestAnimationFrame(step);
+  s.raf = requestAnimationFrame(step);
 }
 
 function renderSHAP(shapValues) {
