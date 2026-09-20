@@ -35,6 +35,17 @@ let baseCPI = 100.0; // fallback until /market-data loads
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+// Shared chart theme (system font, hairline grid, teal/red semantics)
+const CHART = {
+  font: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif',
+  ink: "#0F1923",
+  muted: "#5B6878",
+  grid: "rgba(15, 25, 35, 0.07)",
+  zero: "rgba(15, 25, 35, 0.25)",
+  teal: "#00A896",
+  negative: "#E5484D",
+};
+
 function showChartLoadingState() {
   document.getElementById("town-chart").innerHTML =
     '<div class="chart-status">Loading market data…</div>';
@@ -257,7 +268,8 @@ function renderSHAP(shapValues) {
 
   const labels = entries.map(([k]) => formatFeatureName(k));
   const values = entries.map(([, v]) => Math.round(v));
-  const colors = values.map((v) => (v >= 0 ? "#00A896" : "#C0392B"));
+  const colors = values.map((v) => (v >= 0 ? CHART.teal : CHART.negative));
+  const isMobile = window.innerWidth < 640;
 
   const trace = {
     type: "bar",
@@ -266,35 +278,30 @@ function renderSHAP(shapValues) {
     y: labels,
     marker: { color: colors },
     hovertemplate: "<b>%{y}</b><br>SGD %{x:+,.0f}<extra></extra>",
-    hoverlabel: {
-      bgcolor: "#0F1923",
-      bordercolor: "#0F1923",
-      font: { family: "Roboto", size: 13, color: "#ffffff" },
-      align: "left",
-    },
+    hoverlabel: HOVER_LABEL,
   };
 
   const layout = {
-    margin: { t: 8, b: 44, l: 180, r: 24 },
+    margin: { t: 8, b: 44, l: isMobile ? 130 : 180, r: 16 },
     xaxis: {
       title: {
         text: "SHAP value (SGD)",
-        font: { size: 12, family: "Roboto", color: "#6B7A8D" },
+        font: { size: 12, family: CHART.font, color: CHART.muted },
       },
-      tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
-      gridcolor: "#E2E8EF",
+      tickfont: { size: 12, family: CHART.font, color: CHART.muted },
+      gridcolor: CHART.grid,
       zeroline: true,
-      zerolinecolor: "#CBD5DF",
-      zerolinewidth: 1.5,
+      zerolinecolor: CHART.zero,
+      zerolinewidth: 1,
     },
     yaxis: {
-      tickfont: { size: 12, family: "Roboto", color: "#0F1923" },
+      tickfont: { size: 12, family: CHART.font, color: CHART.ink },
       automargin: true,
     },
     paper_bgcolor: "rgba(0,0,0,0)",
     plot_bgcolor: "rgba(0,0,0,0)",
     height: 320,
-    font: { family: "Roboto", color: "#0F1923" },
+    font: { family: CHART.font, color: CHART.ink },
     showlegend: false,
     bargap: 0.35,
   };
@@ -377,23 +384,26 @@ function initOrUpdateMap(lat, lon, nearestAmenities) {
     }
   }
 
+  // Pin colours live in CSS (--pin-*), shared with the legend
+  const pinIcon = (type) =>
+    L.divIcon({
+      className: "",
+      html: `<div class="pin pin-${type}"></div>`,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+    });
+
   // Flat marker
-  const flatIcon = L.divIcon({
-    className: "",
-    html: `<div style="width:16px;height:16px;border-radius:50%;background:#00A896;border:2.5px solid #fff;box-shadow:0 0 0 1.5px #00A896;cursor:pointer;"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  });
-  flatMarker = L.marker([lat, lon], { icon: flatIcon })
+  flatMarker = L.marker([lat, lon], { icon: pinIcon("flat") })
     .bindPopup("<strong>Selected flat</strong>")
     .addTo(leafletMap);
 
   // Amenity markers
   const amenityConfigs = {
-    mrt: { color: "#E74C3C", label: "MRT" },
-    school: { color: "#3498DB", label: "School" },
-    hawker: { color: "#F39C12", label: "Hawker" },
-    mall: { color: "#9B59B6", label: "Mall" },
+    mrt: { label: "MRT" },
+    school: { label: "School" },
+    hawker: { label: "Hawker" },
+    mall: { label: "Mall" },
   };
 
   leafletMap._amenityMarkers = [];
@@ -403,12 +413,7 @@ function initOrUpdateMap(lat, lon, nearestAmenities) {
       const amenity = nearestAmenities[type];
       if (!amenity || amenity.lat === null) return;
 
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="width:16px;height:16px;border-radius:50%;background:${config.color};border:2px solid #fff;box-shadow:0 0 0 1.5px ${config.color};cursor:pointer;"></div>`,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
+      const icon = pinIcon(type);
 
       const marker = L.marker([amenity.lat, amenity.lon], { icon })
         .bindPopup(`<strong>${config.label}</strong><br>${amenity.name}`)
@@ -573,7 +578,7 @@ function onSliderChange() {
 const HOVER_LABEL = {
   bgcolor: "#0F1923",
   bordercolor: "#0F1923",
-  font: { family: "Roboto", size: 13, color: "#ffffff" },
+  font: { family: CHART.font, size: 13, color: "#ffffff" },
   align: "left",
 };
 
@@ -591,6 +596,12 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
   const prices = towns.map((t) => townMedians[t]);
   const maxPrice = Math.max(...prices);
 
+  const axisFont = (size) => ({
+    size,
+    family: CHART.font,
+    color: CHART.muted,
+  });
+
   Plotly.newPlot(
     "town-chart",
     [
@@ -599,7 +610,7 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
         x: prices,
         y: towns,
         orientation: "h",
-        marker: { color: "#00A896" },
+        marker: { color: CHART.teal },
         hovertemplate: "<b>%{y}</b><br>SGD %{x:,.0f}<extra></extra>",
         hoverlabel: HOVER_LABEL,
       },
@@ -607,31 +618,24 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
     {
       margin: isMobile
         ? { t: 8, b: 60, l: 100, r: 12 }
-        : { t: 8, b: 48, l: 148, r: 24 },
+        : { t: 8, b: 48, l: 148, r: 16 },
       xaxis: {
         range: [0, maxPrice * 1.05],
-        tickfont: {
-          size: isMobile ? 10 : 12,
-          family: "Roboto",
-          color: "#6B7A8D",
-        },
-        gridcolor: "#E2E8EF",
+        tickfont: axisFont(isMobile ? 10 : 12),
+        gridcolor: CHART.grid,
+        zerolinecolor: CHART.zero,
         tickformat: ",.0f",
         tickangle: isMobile ? -45 : 0,
         title: {
           text: "Median resale price (SGD)",
-          font: {
-            size: isMobile ? 10 : 12,
-            family: "Roboto",
-            color: "#6B7A8D",
-          },
+          font: axisFont(isMobile ? 10 : 12),
         },
       },
       yaxis: {
         tickfont: {
           size: isMobile ? 10 : 12,
-          family: "Roboto",
-          color: "#0F1923",
+          family: CHART.font,
+          color: CHART.ink,
         },
         automargin: true,
         ticklabelposition: "outside left",
@@ -640,7 +644,7 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: isMobile ? 520 : 460,
-      font: { family: "Roboto", color: "#0F1923" },
+      font: { family: CHART.font, color: CHART.ink },
       showlegend: false,
       bargap: 0.3,
     },
@@ -654,30 +658,32 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
         mode: "lines",
         x: trendLabels,
         y: trendValues,
-        line: { color: "#00A896", width: 2.5 },
+        line: { color: CHART.teal, width: 2.5, shape: "spline", smoothing: 0.6 },
         hovertemplate: "<b>%{x}</b><br>SGD %{y:,.0f}<extra></extra>",
         hoverlabel: HOVER_LABEL,
       },
     ],
     {
-      margin: { t: 8, b: 48, l: 80, r: 24 },
+      margin: { t: 8, b: 48, l: 80, r: 16 },
       xaxis: {
-        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
-        gridcolor: "#E2E8EF",
+        tickfont: axisFont(12),
+        gridcolor: CHART.grid,
+        zerolinecolor: CHART.zero,
       },
       yaxis: {
-        tickfont: { size: 12, family: "Roboto", color: "#6B7A8D" },
+        tickfont: axisFont(12),
         tickformat: ",.0f",
-        gridcolor: "#E2E8EF",
+        gridcolor: CHART.grid,
+        zerolinecolor: CHART.zero,
         title: {
           text: "Median resale price (SGD)",
-          font: { size: 12, family: "Roboto", color: "#6B7A8D" },
+          font: axisFont(12),
         },
       },
       paper_bgcolor: "rgba(0,0,0,0)",
       plot_bgcolor: "rgba(0,0,0,0)",
       height: 460,
-      font: { family: "Roboto", color: "#0F1923" },
+      font: { family: CHART.font, color: CHART.ink },
       showlegend: false,
     },
     { responsive: true, displayModeBar: false }
