@@ -516,13 +516,23 @@ function displayResults(data, lat, lon, payload) {
   initOrUpdateMap(lat, lon, data.nearest_amenities);
 }
 
+function setSliderFill(el) {
+  const min = parseFloat(el.min);
+  const max = parseFloat(el.max);
+  const p = (parseFloat(el.value) - min) / (max - min);
+  el.style.setProperty("--p", Math.min(1, Math.max(0, p)));
+}
+
 function syncSliders(payload) {
   const set = (id, valId, val) => {
     const el = document.getElementById(id);
     // Never fight the user's finger: a late response must not move a
     // slider that is being dragged.
     if (el && document.activeElement === el) return;
-    if (el) el.value = val;
+    if (el) {
+      el.value = val;
+      setSliderFill(el);
+    }
     const label = document.getElementById(valId);
     if (label) label.textContent = val;
   };
@@ -690,8 +700,44 @@ function renderExplorerCharts(townMedians, trendLabels, trendValues) {
   );
 }
 
+// The nav's hairline only appears once content is scrolling beneath it,
+// and the link for the section in view is marked (wayfinding).
+function initNav() {
+  const nav = document.getElementById("nav");
+  const onScroll = () => nav.classList.toggle("is-scrolled", window.scrollY > 8);
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  if (!("IntersectionObserver" in window)) return;
+  const links = [...nav.querySelectorAll(".nav-links a")];
+  const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+  const spy = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        links.forEach((a) => a.removeAttribute("aria-current"));
+        byId.get(entry.target.id)?.setAttribute("aria-current", "true");
+      });
+    },
+    { rootMargin: "-45% 0px -50% 0px" }
+  );
+  byId.forEach((_, id) => {
+    const section = document.getElementById(id);
+    if (section) spy.observe(section);
+  });
+}
+
+function initSliders() {
+  document.querySelectorAll('input[type="range"]').forEach((el) => {
+    setSliderFill(el);
+    el.addEventListener("input", () => setSliderFill(el));
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initDropdowns();
+  initNav();
+  initSliders();
   fetchMarketData();
   initScrollAnimations();
 
