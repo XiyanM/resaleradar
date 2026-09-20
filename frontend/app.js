@@ -525,6 +525,9 @@ function displayResults(data, lat, lon, payload) {
 function syncSliders(payload) {
   const set = (id, valId, val) => {
     const el = document.getElementById(id);
+    // Never fight the user's finger: a late response must not move a
+    // slider that is being dragged.
+    if (el && document.activeElement === el) return;
     if (el) el.value = val;
     const label = document.getElementById(valId);
     if (label) label.textContent = val;
@@ -532,6 +535,12 @@ function syncSliders(payload) {
 
   set("slider-floor-area", "val-floor-area", payload.floor_area_sqm);
   set("slider-storey", "val-storey", payload.storey_midpoint);
+  set(
+    "slider-lease",
+    "val-lease",
+    payload.remaining_lease_years ??
+      remainingLease(payload.lease_commence_date, payload.transaction_year)
+  );
 
   if (lastPrediction && lastPrediction.feature_values) {
     const fv = lastPrediction.feature_values;
