@@ -32,7 +32,7 @@ This was built as a portfolio project, but the goal from the start was to make t
 
 ## Demo video
 
-[![ResaleRadar demo](https://img.youtube.com/vi/kHB25frJy8M/hqdefault.jpg)](https://www.youtube.com/watch?v=kHB25frJy8M)
+[![ResaleRadar demo](https://img.youtube.com/vi/zbJzP4ItwLo/hqdefault.jpg)](https://youtu.be/zbJzP4ItwLo)
 
 ▶ Click to watch (158s, no audio)
 
