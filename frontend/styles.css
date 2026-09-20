@@ -1,14 +1,14 @@
 /* =========================================================
    ResaleRadar — styles.css
+   Built on Apple's fluid-interface principles:
+     - instant press feedback, springs over fixed-duration easing
+     - translucent materials for chrome, hairlines over hard dividers
+     - size-specific tracking/leading, system type
+     - reduced-motion / reduced-transparency / increased-contrast
    Palette:
-     #FFFFFF  page background
-     #F7F9FB  card / input surface
-     #0F1923  primary text
-     #00A896  teal accent
-     #6B7A8D  secondary text / labels
-   Type:
-     DM Mono  — price display only
-     Roboto    — everything else
+     #FFFFFF  page          #F5F6F8  raised surface
+     #0F1923  ink           #5B6878  secondary ink
+     #00A896  teal (graphics)   #007F72  teal (fills / text on white)
    ========================================================= */
 
 *,
@@ -20,32 +20,107 @@
 }
 
 :root {
+  color-scheme: light;
+
+  /* colour */
+  --bg: #ffffff;
+  --surface: #f5f6f8;
+  --ink: #0f1923;
+  --ink-2: #5b6878;
+  --ink-placeholder: #7a8594;
+  --hairline: rgba(15, 25, 35, 0.1);
+  --hairline-soft: rgba(15, 25, 35, 0.06);
   --teal: #00a896;
-  --teal-light: #e0f5f3;
-  --text-primary: #0f1923;
-  --text-secondary: #6b7a8d;
-  --surface: #f7f9fb;
-  --border: #e2e8ef;
-  --border-strong: #cbd5df;
-  --white: #ffffff;
+  --teal-deep: #007f72; /* 4.9:1 with white — fills and text */
+  --teal-tint: rgba(0, 168, 150, 0.1);
   --red: #c0392b;
   --red-light: #fdf0ee;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  font-size: 15px;
+
+  /* map pins — single source for markers and legend */
+  --pin-flat: #00a896;
+  --pin-mrt: #ff3b30;
+  --pin-hawker: #ff9500;
+  --pin-school: #0a84ff;
+  --pin-mall: #af52de;
+
+  /* shape */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+
+  /* depth */
+  --shadow-card: 0 1px 2px rgba(15, 25, 35, 0.04),
+    0 8px 28px rgba(15, 25, 35, 0.06);
+
+  /* type — the platform system font ships optical sizing and tracking tables */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* motion — critically damped spring (damping 1.0, response 0.4s) */
+  --spring: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --spring-dur: 0.6s;
+
+  font-size: 100%;
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(
+      0,
+      0.0454,
+      0.1465,
+      0.2678,
+      0.3895,
+      0.5015,
+      0.5993,
+      0.6819,
+      0.75,
+      0.8052,
+      0.8493,
+      0.884,
+      0.9113,
+      0.9324,
+      0.9487,
+      0.9612,
+      0.9707,
+      0.978,
+      0.9835,
+      0.9877,
+      0.9908,
+      0.9931,
+      0.9949,
+      0.9962,
+      0.9972,
+      0.9979,
+      0.9985,
+      0.9989,
+      1
+    );
+  }
 }
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family: "Roboto", sans-serif;
-  color: var(--text-primary);
-  background: var(--white);
-  line-height: 1.65;
+  font-family: var(--font);
+  font-optical-sizing: auto;
+  font-size: 1.0625rem; /* 17px — Apple body */
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* visible, consistent keyboard focus */
+:focus-visible {
+  outline: 3px solid rgba(0, 168, 150, 0.55);
+  outline-offset: 2px;
 }
 
 /* =========================================================
@@ -63,16 +138,16 @@ body {
 }
 
 /* =========================================================
-   SCROLL FADE-UP ANIMATION
-   Elements with .fade-up start invisible and slightly low.
-   IntersectionObserver in app.js adds .visible when they
-   enter the viewport, triggering the transition.
+   SCROLL REVEAL
+   IntersectionObserver in app.js adds .visible. Springs, not
+   fixed easing, so the settle feels physical.
    ========================================================= */
 
 .fade-up {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease-out,
+    transform var(--spring-dur) var(--spring);
 }
 
 .fade-up.visible {
@@ -80,285 +155,209 @@ body {
   transform: translateY(0);
 }
 
-/* Stagger children of a fade-up container */
 .fade-up:nth-child(2) {
-  transition-delay: 0.08s;
+  transition-delay: 0.06s;
 }
 .fade-up:nth-child(3) {
-  transition-delay: 0.16s;
+  transition-delay: 0.12s;
 }
 .fade-up:nth-child(4) {
-  transition-delay: 0.24s;
+  transition-delay: 0.18s;
 }
 
 /* =========================================================
-   NAV
+   NAV — a translucent floating layer, content scrolls under it.
+   The hairline only appears once content is actually beneath.
    ========================================================= */
 
 .nav {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.93);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
+  height: 56px;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 1px 0 rgba(15, 25, 35, 0);
+  transition: box-shadow 0.3s ease-out;
+}
+
+.nav.is-scrolled {
+  box-shadow: 0 1px 0 var(--hairline);
+}
+
+.nav-inner {
+  max-width: 1180px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
-  height: 64px;
 }
 
 .nav-logo {
-  font-size: 19px;
+  font-size: 1.0625rem;
   font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .nav-links {
   display: flex;
-  gap: 3rem;
+  gap: 2rem;
 }
 
 .nav-links a {
-  font-size: 15px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.nav-links a:hover {
-  color: var(--text-primary);
-}
-
-/* =========================================================
-   HERO
-   ========================================================= */
-
-.hero {
   position: relative;
-  overflow: hidden;
-  padding: 5rem 1.5rem 4.5rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.125rem;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color 0.2s ease-out;
 }
 
-#heroDotGrid {
+.nav-links a::after {
+  content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-
-.hero-inner {
-  position: relative;
-  z-index: 1;
-  max-width: 640px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.hero-eyebrow {
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--teal);
-  margin-bottom: 1.5rem;
-}
-
-.hero-heading {
-  font-size: clamp(1.9rem, 3.5vw, 2.75rem);
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.025em;
-  color: var(--text-primary);
-  margin-bottom: 1.4rem;
-}
-
-.hero-sub {
-  font-size: 15px;
-  color: var(--text-secondary);
-  line-height: 1.75;
-  margin-bottom: 2.5rem;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.btn-primary {
-  display: inline-block;
+  left: 0.125rem;
+  right: 0.125rem;
+  bottom: 0.2rem;
+  height: 2px;
+  border-radius: 1px;
   background: var(--teal);
-  color: #fff;
-  font-family: "Roboto", sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  padding: 0.75rem 1.75rem;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  transition: background 0.15s, transform 0.1s;
+  transform: scaleX(0);
+  transition: transform 0.4s var(--spring);
 }
 
-.btn-primary:hover {
-  background: #008f7e;
+.nav-links a[aria-current="true"] {
+  color: var(--ink);
 }
 
-.btn-primary:active {
-  transform: scale(0.98);
+.nav-links a[aria-current="true"]::after {
+  transform: scaleX(1);
 }
 
-/* =========================================================
-   SECTIONS
-   ========================================================= */
-
-.section {
-  padding: 4rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.section-alt {
-  background: var(--surface);
-}
-
-.section-header {
-  margin-bottom: 3rem;
-}
-
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.6rem;
-}
-
-.section-sub {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.65;
-}
-
-/* =========================================================
-   PREDICTOR LAYOUT
-   ========================================================= */
-
-.predictor-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: start;
-}
-
-@media (max-width: 800px) {
-  .predictor-layout {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+@media (hover: hover) {
+  .nav-links a:hover {
+    color: var(--ink);
   }
 }
 
 /* =========================================================
-   FORM
+   HERO — a static material: soft light behind large, tightly
+   tracked type. No looping background motion.
    ========================================================= */
 
-.form-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
+.hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(4.5rem, 11vw, 8rem) 1.5rem clamp(4rem, 9vw, 6.5rem);
+  text-align: center;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  flex: 1;
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -25% -10% 0;
+  z-index: -1;
+  background: radial-gradient(
+      36% 44% at 50% 18%,
+      rgba(0, 168, 150, 0.2),
+      transparent 72%
+    ),
+    radial-gradient(28% 34% at 16% 34%, rgba(0, 168, 150, 0.1), transparent 72%),
+    radial-gradient(26% 32% at 86% 26%, rgba(64, 140, 255, 0.09), transparent 72%);
+  filter: blur(28px);
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.1rem;
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, transparent 55%, var(--bg));
 }
 
-.form-row .form-group label {
-  min-height: 2.6em;
-  line-height: 1.3;
-  display: flex;
-  align-items: flex-end;
+.hero-inner {
+  max-width: 44rem;
+  margin: 0 auto;
 }
 
-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
+.hero-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+  margin-bottom: 1.25rem;
 }
 
-input[type="text"],
-input[type="number"],
-input[type="month"],
-select {
-  font-family: "Roboto", sans-serif;
-  font-size: 15px;
-  color: var(--text-primary);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0.65rem 0.85rem;
-  width: 100%;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  appearance: auto;
-  height: 44px;
+.hero-heading {
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.035em; /* large type wants negative tracking */
+  color: var(--ink);
+  margin-bottom: 1.5rem;
 }
 
-input[type="month"] {
-  -webkit-appearance: none;
-  appearance: none;
-  display: flex;
-  align-items: center;
-  height: 44px;
-  min-height: 44px;
-  box-sizing: border-box;
+.hero-sub {
+  max-width: 34rem;
+  margin: 0 auto 2.5rem;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
 }
 
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="month"]:focus,
-select:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.1);
-}
+/* =========================================================
+   BUTTONS — feedback on press, instantly; spring back on release
+   ========================================================= */
 
-.field-hint {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.btn-predict {
-  display: flex;
+.btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--text-primary);
-  color: #fff;
-  font-family: "Roboto", sans-serif;
-  font-size: 15px;
+  font-family: inherit;
+  font-size: 1.0625rem;
   font-weight: 500;
-  padding: 0.8rem 1.75rem;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: var(--teal-deep);
   border: none;
-  border-radius: var(--radius-sm);
+  text-decoration: none;
   cursor: pointer;
-  margin-top: 0.4rem;
-  transition: background 0.15s, transform 0.1s;
-  height: 48px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform var(--spring-dur) var(--spring),
+    background-color 0.2s ease-out, opacity 0.2s ease-out;
 }
 
-.btn-predict:hover {
-  background: #1e3346;
+.btn:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-out, background-color 0.2s ease-out,
+    opacity 0.2s ease-out;
 }
 
-.btn-predict:active {
-  transform: scale(0.98);
+@media (hover: hover) {
+  .btn:hover {
+    background: #006b60;
+  }
+}
+
+.btn-primary {
+  padding: 0.8rem 1.75rem;
+  border-radius: 999px;
+}
+
+.btn-predict {
+  width: 100%;
+  height: 52px;
+  margin-top: 0.25rem;
+  border-radius: var(--r-md);
 }
 
 .btn-predict:disabled {
@@ -366,10 +365,14 @@ select:focus {
   cursor: not-allowed;
 }
 
+.btn-predict:disabled:active {
+  transform: none;
+}
+
 .spinner {
-  width: 15px;
-  height: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -381,17 +384,166 @@ select:focus {
   }
 }
 
-.error-msg {
-  font-size: 14px;
-  color: var(--red);
-  background: var(--red-light);
-  border: 1px solid #f5c6c2;
-  border-radius: var(--radius-sm);
-  padding: 0.7rem 0.9rem;
+/* =========================================================
+   SECTIONS — rhythm from alternating surfaces, not rules
+   ========================================================= */
+
+.section {
+  padding: clamp(4rem, 8vw, 6.5rem) 0;
+  scroll-margin-top: 56px;
+}
+
+.section-alt {
+  background: var(--surface);
+}
+
+.section-header {
+  max-width: 42rem;
+  margin: 0 auto clamp(2.5rem, 5vw, 3.5rem);
+  text-align: center;
+}
+
+.section-header h2 {
+  font-size: clamp(1.875rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.section-sub {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.section-header .section-sub {
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
 }
 
 /* =========================================================
-   OUTPUT PANEL
+   PREDICTOR LAYOUT
+   ========================================================= */
+
+.predictor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .predictor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* keep paired inputs aligned when one label wraps */
+.form-row .form-group label {
+  min-height: 2.6em;
+  line-height: 1.3;
+  display: flex;
+  align-items: flex-end;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.005em; /* small text: slightly positive */
+  color: var(--ink);
+}
+
+input[type="text"],
+input[type="number"],
+input[type="month"],
+select {
+  width: 100%;
+  height: 48px;
+  padding: 0 0.9rem;
+  font-family: inherit;
+  font-size: 1.0625rem; /* ≥16px so iOS never zooms on focus */
+  color: var(--ink);
+  background-color: #fff;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+input::placeholder {
+  color: var(--ink-placeholder);
+}
+
+select {
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5' stroke='%235b6878' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.95rem center;
+  cursor: pointer;
+}
+
+input[type="month"] {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="month"]:focus,
+select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 4px rgba(0, 168, 150, 0.18);
+}
+
+.field-hint {
+  font-size: 0.8125rem;
+  letter-spacing: 0.005em;
+  color: var(--ink-2);
+}
+
+.error-msg {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--red);
+  background: var(--red-light);
+  border-radius: var(--r-sm);
+  padding: 0.8rem 1rem;
+  animation: rise 0.45s var(--spring) backwards;
+}
+
+/* =========================================================
+   OUTPUT PANEL — inset-grouped cards, materialising in
    ========================================================= */
 
 .output-panel {
@@ -404,96 +556,171 @@ select:focus {
   align-items: center;
   justify-content: center;
   gap: 1.1rem;
-  min-height: 320px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 15px;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
+  min-height: 420px;
   padding: 2.5rem;
+  text-align: center;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+  background: var(--surface);
+  border-radius: var(--r-xl);
+}
+
+.empty-state p {
+  max-width: 19rem;
+}
+
+.empty-state strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .empty-icon {
-  opacity: 0.55;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  color: var(--teal);
+  background: var(--teal-tint);
+  border-radius: 22px;
 }
 
-/* =========================================================
-   RESULT PRICE
-   ========================================================= */
+#results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-price-block,
+.whatif-block,
+.shap-block,
+.map-block {
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+}
+
+/* the cards arrive in sequence: transform + opacity only, so Plotly
+   and Leaflet measure their containers at full size throughout */
+#results:not(.hidden) > * {
+  animation: rise 0.7s var(--spring) backwards;
+}
+#results:not(.hidden) > :nth-child(2) {
+  animation-delay: 0.06s;
+}
+#results:not(.hidden) > :nth-child(3) {
+  animation-delay: 0.12s;
+}
+#results:not(.hidden) > :nth-child(4) {
+  animation-delay: 0.18s;
+}
+
+/* the price alone materialises with blur + scale (no chart inside it) */
+#results:not(.hidden) > .result-price-block {
+  animation-name: materialize;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes materialize {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    filter: blur(10px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
 
 .result-price-block {
-  margin-bottom: 2.25rem;
+  background: linear-gradient(180deg, var(--teal-tint), rgba(0, 168, 150, 0) 70%),
+    var(--surface);
 }
 
 .result-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
   display: block;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
 .result-price {
-  font-family: "DM Mono", monospace;
-  font-size: clamp(2.1rem, 5vw, 3.5rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  line-height: 1;
   margin-bottom: 0.6rem;
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums; /* digits don't jitter while counting */
+  color: var(--ink);
 }
 
 .result-interval {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-2);
 }
 
 .result-interval strong {
-  color: var(--text-primary);
-  font-weight: 500;
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .crossing-warning {
-  margin-top: 0.85rem;
-  font-size: 13px;
-  background: #fff8e6;
-  border: 1px solid #f0d88a;
+  margin-top: 1rem;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
   color: #7a5c00;
-  border-radius: var(--radius-sm);
-  padding: 0.55rem 0.85rem;
-}
-
-.result-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 2rem 0;
+  background: #fff6dc;
+  border-radius: var(--r-sm);
 }
 
 /* =========================================================
-   WHAT-IF SLIDERS
+   CARD HEADINGS
    ========================================================= */
 
 .whatif-block h3,
 .shap-block h3,
 .map-block h3 {
-  font-size: 15px;
+  margin-bottom: 0.3rem;
+  font-size: 1.1875rem;
   font-weight: 600;
-  margin-bottom: 0.4rem;
+  letter-spacing: -0.02em;
 }
 
 .whatif-block .section-sub,
 .shap-block .section-sub {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+/* =========================================================
+   WHAT-IF SLIDERS — 1:1 native drag, filled track,
+   thumb responds on press
+   ========================================================= */
+
+.slider-row + .slider-row {
+  margin-top: 1rem;
 }
 
 .slider-row label {
   display: flex;
-  align-items: center;
-  font-size: 14px;
+  align-items: baseline;
+  font-size: 0.9375rem;
   font-weight: 400;
-  color: var(--text-secondary);
+  color: var(--ink-2);
 }
 
 .slider-label-text {
@@ -501,51 +728,107 @@ select:focus {
 }
 
 .slider-val {
-  min-width: 56px;
+  min-width: 3.5rem;
   text-align: right;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-weight: 600;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .slider-unit {
-  min-width: 32px;
+  min-width: 2rem;
+  padding-left: 0.35rem;
   text-align: left;
-  padding-left: 0.4rem;
+  font-size: 0.8125rem;
 }
 
 input[type="range"] {
+  --track: rgba(15, 25, 35, 0.12);
+  --thumb: 26px;
+  --p: 0.5; /* 0..1, set from app.js */
+  display: block;
+  width: 100%;
+  height: 32px; /* generous hit area */
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  width: 100%;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
-  background: var(--border);
-  outline: none;
-  cursor: pointer;
-  height: auto;
+  background: linear-gradient(
+    to right,
+    var(--teal) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--p)),
+    var(--track) calc(var(--thumb) / 2 + (100% - var(--thumb)) * var(--p))
+  );
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--track);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--teal);
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((4px - var(--thumb)) / 2);
   border-radius: 50%;
-  background: var(--teal);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--teal);
-  cursor: pointer;
+  background: #fff;
+  border: none;
+  box-shadow: 0 0 0 0.5px rgba(15, 25, 35, 0.1),
+    0 1px 3px rgba(15, 25, 35, 0.22), 0 4px 10px rgba(15, 25, 35, 0.12);
+  transition: transform var(--spring-dur) var(--spring);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: var(--thumb);
+  height: var(--thumb);
+  box-sizing: border-box;
   border-radius: 50%;
-  background: var(--teal);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px var(--teal);
-  cursor: pointer;
+  background: #fff;
+  border: none;
+  box-shadow: 0 0 0 0.5px rgba(15, 25, 35, 0.1),
+    0 1px 3px rgba(15, 25, 35, 0.22), 0 4px 10px rgba(15, 25, 35, 0.12);
+  transition: transform var(--spring-dur) var(--spring);
+}
+
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+  transition-duration: 0.1s;
+}
+
+input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.12);
+  transition-duration: 0.1s;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(0, 168, 150, 0.35),
+    0 1px 3px rgba(15, 25, 35, 0.22);
+}
+
+input[type="range"]:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px rgba(0, 168, 150, 0.35),
+    0 1px 3px rgba(15, 25, 35, 0.22);
+}
+
+input[type="range"]:focus-visible {
+  outline: none;
 }
 
 /* =========================================================
@@ -560,41 +843,135 @@ input[type="range"]::-moz-range-thumb {
    MAP
    ========================================================= */
 
-#map {
+.map-wrap {
   position: relative;
-  height: 280px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  overflow: hidden;
   margin-top: 0.85rem;
 }
 
-#map .leaflet-pane {
-  z-index: 1;
+#map {
+  position: relative;
+  z-index: 0; /* contain Leaflet's internal z-indexes beneath the nav */
+  height: 300px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: #e9ecef;
+  box-shadow: inset 0 0 0 1px var(--hairline-soft);
 }
 
-#map .leaflet-control-container {
-  z-index: 2;
+#map.leaflet-container {
+  font-family: var(--font);
 }
 
-#map .leaflet-top,
-#map .leaflet-bottom {
-  z-index: 2;
+/* Leaflet chrome, restyled as light translucent controls */
+#map .leaflet-bar {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 25, 35, 0.12), 0 4px 14px rgba(15, 25, 35, 0.12);
+}
+
+#map .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hairline-soft);
+  transition: background-color 0.15s ease-out;
+}
+
+#map .leaflet-bar a:last-child {
+  border-bottom: none;
+}
+
+#map .leaflet-bar a:active {
+  background: rgba(235, 238, 241, 0.95);
+}
+
+#map .leaflet-control-attribution {
+  font-size: 10px;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-top-left-radius: 8px;
+}
+
+#map .leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 2px 6px rgba(15, 25, 35, 0.1), 0 10px 30px rgba(15, 25, 35, 0.16);
+}
+
+#map .leaflet-popup-content {
+  margin: 0.7rem 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+#map .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: none;
+}
+
+/* pins: colour comes from the shared --pin-* tokens */
+.pin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--c);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1px var(--c), 0 2px 6px rgba(15, 25, 35, 0.25);
+  cursor: pointer;
+  animation: pin-in 0.6s var(--spring) backwards;
+}
+
+@keyframes pin-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+.pin-flat {
+  --c: var(--pin-flat);
+}
+.pin-mrt {
+  --c: var(--pin-mrt);
+}
+.pin-hawker {
+  --c: var(--pin-hawker);
+}
+.pin-school {
+  --c: var(--pin-school);
+}
+.pin-mall {
+  --c: var(--pin-mall);
 }
 
 .map-legend {
   display: flex;
-  gap: 1.25rem;
-  margin-top: 0.65rem;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
 }
 
 .legend-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.005em;
+  color: var(--ink-2);
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--hairline-soft);
 }
 
 .legend-dot {
@@ -602,26 +979,26 @@ input[type="range"]::-moz-range-thumb {
   width: 10px;
   height: 10px;
   border-radius: 50%;
+  background: var(--c);
   flex-shrink: 0;
-}
-.map-block {
-  padding-bottom: 0.5rem;
-  position: relative;
 }
 
 .map-tap-hint {
   position: absolute;
   bottom: 12px;
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(15, 25, 35, 0.82);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 0.4rem 0.9rem;
-  border-radius: var(--radius-sm);
-  pointer-events: none;
   z-index: 3;
+  transform: translateX(-50%);
+  padding: 0.45rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(15, 25, 35, 0.72);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* =========================================================
@@ -631,27 +1008,29 @@ input[type="range"]::-moz-range-thumb {
 .explorer-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  gap: 1.5rem;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 860px) {
   .explorer-grid {
     grid-template-columns: 1fr;
   }
 }
 
 .chart-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem 1.75rem 1.25rem;
+  min-width: 0;
+  padding: 1.75rem 1.5rem 1.25rem;
+  background: var(--bg);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-card);
 }
 
 .chart-card h3 {
-  font-size: 15px;
+  margin-bottom: 1.25rem;
+  font-size: 1.1875rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 /* =========================================================
@@ -661,61 +1040,74 @@ input[type="range"]::-moz-range-thumb {
 .about-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3.5rem 5rem;
+  gap: 1.5rem;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 860px) {
   .about-grid {
     grid-template-columns: 1fr;
-    gap: 2.5rem;
   }
 }
 
+.about-col {
+  min-width: 0;
+  padding: 2rem;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+}
+
 .about-col h3 {
-  font-size: 14px;
+  margin-bottom: 0.9rem;
+  font-size: 1.375rem;
   font-weight: 600;
-  margin-bottom: 0.85rem;
-  color: var(--teal);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--ink);
 }
 
 .about-col p {
-  font-size: 15px;
-  color: var(--text-secondary);
-  line-height: 1.8;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.9rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-2);
 }
 
 .about-col p:last-child {
   margin-bottom: 0;
 }
 
-.metric-row {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 0.9rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid var(--border);
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
 }
 
-.metric-row:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
+.metric-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 1.1rem 1rem;
+  background: var(--bg);
+  border-radius: var(--r-md);
 }
 
 .metric-val {
-  font-family: "DM Mono", monospace;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-size: clamp(1.25rem, 2vw + 0.6rem, 1.625rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  color: var(--ink);
 }
 
 .metric-label {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  letter-spacing: 0.005em;
+  color: var(--ink-2);
 }
 
 /* =========================================================
@@ -723,30 +1115,37 @@ input[type="range"]::-moz-range-thumb {
    ========================================================= */
 
 .footer {
-  padding: 2rem 0;
+  padding: 2rem 0 2.5rem;
+  background: var(--surface);
 }
 
 .footer-inner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
-  color: var(--text-secondary);
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.005em;
+  color: var(--ink-2);
 }
 
 .footer a {
-  color: var(--text-secondary);
+  color: var(--ink-2);
   text-decoration: none;
+  transition: color 0.2s ease-out;
 }
 
-.footer a:hover {
-  color: var(--teal);
+@media (hover: hover) {
+  .footer a:hover {
+    color: var(--teal-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 /* =========================================================
-   CHARTS
+   CHART STATES
    ========================================================= */
 
 .chart-status {
@@ -754,59 +1153,199 @@ input[type="range"]::-moz-range-thumb {
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   text-align: center;
+  color: var(--ink-2);
+}
+
+.chart-status:not(.chart-status-error) {
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
 }
 
 .chart-status-error button {
-  margin-left: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  border: 1px solid currentColor;
-  background: transparent;
-  border-radius: var(--radius-sm);
+  margin-left: 0.6rem;
+  padding: 0.35rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--teal-deep);
+  background: var(--teal-tint);
+  border: none;
+  border-radius: 999px;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-family: "Roboto", sans-serif;
+  transition: transform var(--spring-dur) var(--spring);
+}
+
+.chart-status-error button:active {
+  transform: scale(0.96);
+  transition-duration: 0.1s;
 }
 
 /* =========================================================
-   MOBILE
+   SMALL SCREENS
    ========================================================= */
 
 @media (max-width: 640px) {
-  .nav {
-    padding: 0 1.25rem;
+  .container,
+  .nav-inner {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
-  .nav-logo {
-    font-size: 16px;
-    flex-shrink: 0;
-  }
+
   .nav-links {
-    gap: 1.1rem;
-  }
-  .nav-links a {
-    font-size: 13px;
+    gap: 1.25rem;
   }
 
-  input[type="text"],
-  input[type="number"],
-  input[type="month"],
-  select {
-    font-size: 16px;
+  .form-panel,
+  .result-price-block,
+  .whatif-block,
+  .shap-block,
+  .map-block {
+    padding: 1.25rem;
+    border-radius: var(--r-lg);
   }
 
-  input[type="range"]::-webkit-slider-thumb {
-    width: 26px;
-    height: 26px;
+  .empty-state,
+  .about-col,
+  .chart-card {
+    border-radius: var(--r-lg);
   }
-  input[type="range"]::-moz-range-thumb {
-    width: 26px;
-    height: 26px;
+
+  .about-col {
+    padding: 1.5rem;
   }
 
   .empty-state {
+    min-height: 260px;
     padding: 1.75rem;
-    min-height: 240px;
+  }
+
+  .form-row {
+    gap: 0.75rem;
+  }
+
+  input[type="range"] {
+    --thumb: 30px;
+  }
+
+  #map {
+    height: 260px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY PREFERENCES
+   ========================================================= */
+
+/* No backdrop-filter support: keep chrome legible */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav {
+    background: rgba(255, 255, 255, 0.97);
+  }
+}
+
+/* Reduced motion means gentler, not absent: cross-fades replace
+   slides, springs and scale; no blur, no overshoot. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fade-up {
+    transform: none;
+    transition: opacity 0.25s linear;
+    transition-delay: 0s !important;
+  }
+
+  .btn:active,
+  .chart-status-error button:active {
+    transform: none;
+  }
+
+  input[type="range"]:active::-webkit-slider-thumb,
+  input[type="range"]:active::-moz-range-thumb {
+    transform: none;
+  }
+
+  #results:not(.hidden) > *,
+  #results:not(.hidden) > .result-price-block,
+  .error-msg,
+  .pin {
+    animation: fade-in 0.25s linear backwards;
+    animation-delay: 0s;
+  }
+
+  .chart-status:not(.chart-status-error) {
+    animation: none;
+  }
+
+  .nav-links a::after {
+    transition: none;
+  }
+}
+
+/* Reduced transparency: frostier, then solid */
+@media (prefers-reduced-transparency: reduce) {
+  .nav {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  #map .leaflet-bar a,
+  #map .leaflet-control-attribution,
+  #map .leaflet-popup-content-wrapper {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  #map .leaflet-popup-tip {
+    background: #fff;
+  }
+
+  .map-tap-hint {
+    background: var(--ink);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Increased contrast: defined edges, darker secondary ink */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-2: #3d4756;
+    --ink-placeholder: #5b6878;
+    --hairline: rgba(15, 25, 35, 0.4);
+    --hairline-soft: rgba(15, 25, 35, 0.3);
+  }
+
+  .nav {
+    background: #fff;
+    box-shadow: 0 1px 0 var(--hairline);
+  }
+
+  .form-panel,
+  .result-price-block,
+  .whatif-block,
+  .shap-block,
+  .map-block,
+  .about-col,
+  .empty-state {
+    box-shadow: 0 0 0 1px var(--hairline);
+  }
+
+  .chart-card {
+    box-shadow: 0 0 0 1px var(--hairline);
+  }
+
+  .metric-row {
+    box-shadow: 0 0 0 1px var(--hairline-soft);
   }
 }

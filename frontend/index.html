@@ -3,13 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
     <title>ResaleRadar — HDB Resale Price Predictor</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Roboto:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -18,18 +13,19 @@
   </head>
   <body>
     <!-- NAV -->
-    <nav class="nav">
-      <span class="nav-logo">ResaleRadar</span>
-      <div class="nav-links">
-        <a href="#predictor">Predictor</a>
-        <a href="#explorer">Explorer</a>
-        <a href="#about">About</a>
+    <nav class="nav" id="nav" aria-label="Primary">
+      <div class="nav-inner">
+        <span class="nav-logo">ResaleRadar</span>
+        <div class="nav-links">
+          <a href="#predictor">Predictor</a>
+          <a href="#explorer">Explorer</a>
+          <a href="#about">About</a>
+        </div>
       </div>
     </nav>
 
     <!-- HERO -->
     <section class="hero">
-      <canvas id="heroDotGrid"></canvas>
       <div class="hero-inner">
         <p class="hero-eyebrow">HDB Resale Price Intelligence</p>
         <h1 class="hero-heading">Know what a flat is<br />actually worth.</h1>
@@ -40,7 +36,7 @@
         </p>
         <a
           href="#predictor"
-          class="btn-primary"
+          class="btn btn-primary"
           onclick="event.preventDefault(); document.getElementById('predictor').scrollIntoView({ behavior: 'smooth' });"
           >Get a prediction</a
         >
@@ -149,7 +145,7 @@
             </div>
 
             <button
-              class="btn-predict"
+              class="btn btn-predict"
               id="predict-btn"
               onclick="runPrediction()"
             >
@@ -157,7 +153,11 @@
               <span id="predict-spinner" class="spinner hidden"></span>
             </button>
 
-            <div id="error-msg" class="error-msg hidden"></div>
+            <div
+              id="error-msg"
+              class="error-msg hidden"
+              role="alert"
+            ></div>
           </div>
 
           <!-- OUTPUT PANEL -->
@@ -171,25 +171,26 @@
                   viewBox="0 0 40 40"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
                 >
                   <rect
                     x="6"
                     y="8"
                     width="28"
                     height="26"
-                    rx="2"
-                    stroke="#00A896"
+                    rx="6"
+                    stroke="currentColor"
                     stroke-width="1.5"
                   />
                   <path
                     d="M13 20h14M13 25h8"
-                    stroke="#00A896"
+                    stroke="currentColor"
                     stroke-width="1.5"
                     stroke-linecap="round"
                   />
                   <path
                     d="M13 15h6"
-                    stroke="#00A896"
+                    stroke="currentColor"
                     stroke-width="1.5"
                     stroke-linecap="round"
                   />
@@ -213,8 +214,6 @@
                 </div>
               </div>
 
-              <div class="result-divider"></div>
-
               <!-- WHAT-IF SLIDERS -->
               <div class="whatif-block">
                 <h3>What-if analysis</h3>
@@ -223,7 +222,7 @@
                 </p>
 
                 <div class="slider-row">
-                  <label>
+                  <label for="slider-floor-area">
                     <span class="slider-label-text">Floor area</span>
                     <span class="slider-val" id="val-floor-area"></span>
                     <span class="slider-unit">sqm</span>
@@ -238,7 +237,7 @@
                   />
                 </div>
                 <div class="slider-row">
-                  <label>
+                  <label for="slider-storey">
                     <span class="slider-label-text">Storey</span>
                     <span class="slider-val" id="val-storey"></span>
                     <span class="slider-unit"></span>
@@ -253,7 +252,7 @@
                   />
                 </div>
                 <div class="slider-row">
-                  <label>
+                  <label for="slider-lease">
                     <span class="slider-label-text">Remaining lease</span>
                     <span class="slider-val" id="val-lease"></span>
                     <span class="slider-unit">yrs</span>
@@ -268,7 +267,7 @@
                   />
                 </div>
                 <div class="slider-row">
-                  <label>
+                  <label for="slider-mrt">
                     <span class="slider-label-text">Dist. to nearest MRT</span>
                     <span class="slider-val" id="val-mrt"></span>
                     <span class="slider-unit">km</span>
@@ -283,7 +282,7 @@
                   />
                 </div>
                 <div class="slider-row">
-                  <label>
+                  <label for="slider-cbd">
                     <span class="slider-label-text">Dist. to CBD</span>
                     <span class="slider-val" id="val-cbd"></span>
                     <span class="slider-unit">km</span>
@@ -299,8 +298,6 @@
                 </div>
               </div>
 
-              <div class="result-divider"></div>
-
               <!-- SHAP -->
               <div class="shap-block">
                 <h3>What drove this prediction</h3>
@@ -311,35 +308,30 @@
                 <div id="shap-chart"></div>
               </div>
 
-              <div class="result-divider"></div>
-
               <!-- MAP -->
               <div class="map-block">
                 <h3>Location</h3>
-                <div id="map"></div>
-                <div id="mapTapHint" class="map-tap-hint hidden">
-                  Tap to interact with map
+                <div class="map-wrap">
+                  <div id="map"></div>
+                  <div id="mapTapHint" class="map-tap-hint hidden">
+                    Tap to interact with map
+                  </div>
                 </div>
                 <div class="map-legend">
                   <span class="legend-item"
-                    ><span class="legend-dot" style="background: #00a896"></span
-                    >Flat</span
+                    ><span class="legend-dot pin-flat"></span>Flat</span
                   >
                   <span class="legend-item"
-                    ><span class="legend-dot" style="background: #e74c3c"></span
-                    >MRT</span
+                    ><span class="legend-dot pin-mrt"></span>MRT</span
                   >
                   <span class="legend-item"
-                    ><span class="legend-dot" style="background: #f39c12"></span
-                    >Hawker</span
+                    ><span class="legend-dot pin-hawker"></span>Hawker</span
                   >
                   <span class="legend-item"
-                    ><span class="legend-dot" style="background: #3498db"></span
-                    >School</span
+                    ><span class="legend-dot pin-school"></span>School</span
                   >
                   <span class="legend-item"
-                    ><span class="legend-dot" style="background: #9b59b6"></span
-                    >Mall</span
+                    ><span class="legend-dot pin-mall"></span>Mall</span
                   >
                 </div>
               </div>
@@ -413,21 +405,23 @@
           </div>
           <div class="about-col fade-up">
             <h3>Performance</h3>
-            <div class="metric-row">
-              <span class="metric-val">3.82%</span
-              ><span class="metric-label">MAPE on held-out test set</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-val">SGD 30,708</span
-              ><span class="metric-label">RMSE (2024 dollars)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-val">69</span
-              ><span class="metric-label">Input Features</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-val">236,930+</span
-              ><span class="metric-label">Training transactions</span>
+            <div class="metrics">
+              <div class="metric-row">
+                <span class="metric-val">3.82%</span
+                ><span class="metric-label">MAPE on held-out test set</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-val">SGD 30,708</span
+                ><span class="metric-label">RMSE (2024 dollars)</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-val">69</span
+                ><span class="metric-label">Input Features</span>
+              </div>
+              <div class="metric-row">
+                <span class="metric-val">236,930+</span
+                ><span class="metric-label">Training transactions</span>
+              </div>
             </div>
           </div>
           <div class="about-col fade-up">
